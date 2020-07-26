@@ -32,6 +32,41 @@ builder.Services.AddSingleton<IFirebaseGoogleAuthService, FirebaseGoogleAuthServ
 <script src="_content/BlazorUtils.Firebase/auth.js"></script>
 ```
 
+### Usage
+> Add below directives to get an instance of IFirebaseGoogleAuthService in your razor component:
+```
+@using BlazorUtils.Firebase
+@inject IFirebaseGoogleAuthService GoogleAuth
+```
+> Invoke the APIs in your component, like in below example:
+```
+    async void TriggerSignIn()
+    {
+        await GoogleAuth.SignInWithPopup(new HashSet<string>());
+        GetUserInfo();
+        StateHasChanged();
+    }
+    async void TriggerSignOut()
+    {
+        await GoogleAuth.SignOut();
+        GetUserInfo();
+        StateHasChanged();
+    }
+    async void GetUserInfo()
+    {
+        FirebaseGoogleAuthResult.GoogleAuthUser user = await GoogleAuth.GetCurrentUser();
+        if (user != null && user.uid != null)
+        {
+            UserInfo = JsonSerializer.Serialize<FirebaseGoogleAuthResult.GoogleAuthUser>(user);
+        }
+        else
+        {
+            UserInfo = "User Not Signed In";
+        }
+        StateHasChanged();
+    }
+```
+
 ### Demo Project
 Here's a project which uses BlazorUtils.Firebase library:<br>
 https://github.com/sobu86/TimeUtilities
