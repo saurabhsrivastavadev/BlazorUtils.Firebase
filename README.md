@@ -38,3 +38,13 @@ https://github.com/sobu86/TimeUtilities
 
 You can take a look at this commit specifically:<br>
 https://github.com/sobu86/TimeUtilities/commit/bbaeef8510b47d5893ed1d04a57f0eb6940a9af0
+
+### Note
+```
+This project is currently designed with the assumption that the blazor app using it is hosted on firebase.
+With this assumption, there are 2 benefits:
+- There is no need to specify app specific firebase/oauth config which firebase is able to directly pull from the hosted app
+- The firebase sdk scripts can be directly used from the firebase hosting URLs
+More details can be found at:
+https://firebase.google.com/docs/web/setup
+```
