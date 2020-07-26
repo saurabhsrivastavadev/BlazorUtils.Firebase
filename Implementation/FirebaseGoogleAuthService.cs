@@ -82,5 +82,11 @@ namespace BlazorUtils.Firebase
             return await JSR.InvokeAsync<bool>(
                     "window.blazor_utils.firebase_auth.google.isSignedIn");
         }
+
+        public async Task<bool> SetPersistence(string persistence)
+        {
+            return await JSR.InvokeAsync<bool>(
+                    "window.blazor_utils.firebase_auth.google.setPersistence", persistence);
+        }
     }
 }

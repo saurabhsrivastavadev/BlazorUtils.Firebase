@@ -20,6 +20,10 @@ window.blazor_utils = {
                     });
                 }
 
+                // by default resort to local persistence
+                // keep the user signed in
+                await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
                 let resultObj;
                 try {
 
@@ -49,6 +53,32 @@ window.blazor_utils = {
                 }
 
                 return JSON.stringify(resultObj);
+            },
+
+            setPersistence: async function (persistence) {
+
+                let fbPersistence = firebase.auth.Auth.Persistence.NONE;
+
+                if (persistence.toUpperCase() === 'SESSION') {
+                    fbPersistence = firebase.auth.Auth.Persistence.SESSION;
+                } else if (persistence.toUpperCase() === 'LOCAL') {
+                    fbPersistence = firebase.auth.Auth.Persistence.LOCAL;
+                } else if (persistence.toUpperCase() === 'NONE') {
+                    fbPersistence = firebase.auth.Auth.Persistence.NONE;
+                } else {
+                    console.log('invalid persistence value: ' + persistence);
+                    return false;
+                }
+
+                try {
+
+                    await firebase.auth().setPersistence(fbPersistence);
+                    return true;
+
+                } catch (error) {
+
+                    return false;
+                }
             },
 
             getCurrentUser: function () {
