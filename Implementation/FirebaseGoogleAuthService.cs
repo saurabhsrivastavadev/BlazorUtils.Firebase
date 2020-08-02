@@ -1,14 +1,15 @@
-
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace BlazorUtils.Firebase
 {
-    public class FirebaseGoogleAuthService : IFirebaseGoogleAuthService
+    public class FirebaseGoogleAuthService : AuthenticationStateProvider, IFirebaseGoogleAuthService
     {
         private IJSRuntime JSR { get; set; }
         private ILogger<FirebaseGoogleAuthService> Logger { get; set; }
@@ -21,24 +22,56 @@ namespace BlazorUtils.Firebase
 
         public async Task<FirebaseGoogleAuthResult> SignInWithPopup(ISet<string> signInScopes = null)
         {
-            string signInResult =
-                await JSR.InvokeAsync<string>(
-                    "window.blazor_utils.firebase_auth.google.signInWithPopup", signInScopes);
+            string signInResult = string.Empty;
+            bool wasUserSignedIn = await IsSignedIn();
 
-            return ConvertJsonToAuthResult(signInResult);
+            try
+            {
+                signInResult =
+                    await JSR.InvokeAsync<string>(
+                        "window.blazor_utils.firebase_auth.google.signInWithPopup", signInScopes);
+            }
+            catch
+            {
+                Logger.LogError("Sign in failed.");
+            }
+
+            FirebaseGoogleAuthResult result = ConvertJsonToAuthResult(signInResult);
+            if (result.Success && !wasUserSignedIn)
+            {
+                base.NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+            }
+
+            return result;
         }
 
         public async Task<FirebaseGoogleAuthResult> SignOut()
         {
-            string signOutResult =
-                await JSR.InvokeAsync<string>("window.blazor_utils.firebase_auth.google.signOut");
+            string signOutResult = string.Empty;
+            bool wasUserSignedIn = await IsSignedIn();
 
-            return ConvertJsonToAuthResult(signOutResult);
+            try
+            {
+                signOutResult =
+                    await JSR.InvokeAsync<string>("window.blazor_utils.firebase_auth.google.signOut");
+            }
+            catch
+            {
+                Logger.LogError("Sign out failed.");
+            }
+
+            FirebaseGoogleAuthResult result = ConvertJsonToAuthResult(signOutResult);
+            if (result.Success && wasUserSignedIn)
+            {
+                base.NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+            }
+
+            return result;
         }
 
         private FirebaseGoogleAuthResult ConvertJsonToAuthResult(string json)
         {
-            FirebaseGoogleAuthResult authResult = null;
+            FirebaseGoogleAuthResult authResult;
 
             try
             {
@@ -62,19 +95,37 @@ namespace BlazorUtils.Firebase
 
         public async Task<FirebaseGoogleAuthResult.GoogleAuthUser> GetCurrentUser()
         {
-            string userJson =
-                await JSR.InvokeAsync<string>(
-                    "window.blazor_utils.firebase_auth.google.getCurrentUser");
+            int retries = 2;
+            int tries = 0;
 
-            try
+            // Sometimes the firebase getUser API doesn't return a valid user right away
+            // Event if the user is signed in, so let's keep few retries.
+            while (tries <= retries)
             {
-                return JsonSerializer.Deserialize<FirebaseGoogleAuthResult.GoogleAuthUser>(
-                    userJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                try
+                {
+                    string userJson =
+                        await JSR.InvokeAsync<string>(
+                            "window.blazor_utils.firebase_auth.google.getCurrentUser");
+
+                    var googleUser = JsonSerializer.Deserialize<FirebaseGoogleAuthResult.GoogleAuthUser>(
+                        userJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (googleUser != null && googleUser.email != null)
+                    {
+                        return googleUser;
+                    }
+                }
+                catch { }
+
+                tries++;
+                if (tries < retries)
+                {
+                    // Delay before next retry
+                    await Task.Delay(1000);
+                }
             }
-            catch
-            {
-                return null;
-            }
+
+            return null;
         }
 
         public async Task<bool> IsSignedIn()
@@ -87,6 +138,28 @@ namespace BlazorUtils.Firebase
         {
             return await JSR.InvokeAsync<bool>(
                     "window.blazor_utils.firebase_auth.google.setPersistence", persistence);
+        }
+
+        public override async Task<AuthenticationState> GetAuthenticationStateAsync()
+        {
+            FirebaseGoogleAuthResult.GoogleAuthUser googleUser = await GetCurrentUser();
+            ClaimsPrincipal user;
+
+            if (googleUser != null)
+            {
+                var identity = new ClaimsIdentity(
+                    new List<Claim> {
+                        new Claim(ClaimTypes.Name, googleUser.displayName),
+                        new Claim(ClaimTypes.Email, googleUser.email)
+                    }, "Firebase Google authentication");
+                user = new ClaimsPrincipal(identity);
+            }
+            else
+            {
+                user = new ClaimsPrincipal();
+            }
+
+            return new AuthenticationState(user);
         }
     }
 }
