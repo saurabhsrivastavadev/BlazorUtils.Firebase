@@ -8,6 +8,13 @@ window.blazor_utils = {
 
             provider: null,
 
+            /**
+             * Sign in using Google auth with a popup window.
+             * The current tab will not be redirected for login.
+             * @param {string[]} signInScopeList
+             * The list of Google API scopes that will be requested during sign in
+             * @returns {string} Stringified auth result object
+             */
             signInWithPopup: async function(signInScopeList) {
 
                 if (this.provider == null) {
@@ -38,6 +45,11 @@ window.blazor_utils = {
                 return JSON.stringify(resultObj);
             },
 
+            /**
+             * Sign out the currently signed in user.
+             * No effect if user is not signed in.
+             * @returns {string} Stringified auth result object.
+             * */
             signOut: async function () {
 
                 let resultObj;
@@ -55,6 +67,11 @@ window.blazor_utils = {
                 return JSON.stringify(resultObj);
             },
 
+            /**
+             * Function to set login persistence.
+             * @param {string} persistence Can have value SESSION, LOCAL or NONE
+             * @returns {boolean} true if operation successful, false otherwise.
+             */
             setPersistence: async function (persistence) {
 
                 let fbPersistence = firebase.auth.Auth.Persistence.NONE;
@@ -81,6 +98,10 @@ window.blazor_utils = {
                 }
             },
 
+            /**
+             * Get the currently signed in user.
+             * @returns {string} The user object stringified.
+             * */
             getCurrentUser: function () {
 
                 let user = firebase.auth().currentUser;
@@ -90,6 +111,10 @@ window.blazor_utils = {
                 return JSON.stringify({});
             },
 
+            /**
+             * Is the user signed in ?
+             * @returns {boolean} true if user is signed in, false otherwise
+             * */
             isSignedIn: function () {
 
                 let user = firebase.auth().currentUser;
@@ -100,6 +125,10 @@ window.blazor_utils = {
                 }
             },
 
+            /**
+             * Private function to convert error object to a custom object
+             * @param {any} error
+             */
             getErrorObject: function (error) {
 
                 return {
