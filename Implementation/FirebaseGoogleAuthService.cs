@@ -18,6 +18,27 @@ namespace BlazorUtils.Firebase
         {
             JSR = jsr;
             Logger = logger;
+
+            RegisterForAuthStateChangedEvent();
+        }
+
+        private void RegisterForAuthStateChangedEvent()
+        {
+            try
+            {
+                JSR.InvokeAsync<bool>("window.blazor_utils.firebase_auth.google.registerForAuthStateChange",
+                    "BlazorUtils.Firebase", "OnAuthStateChangedJsCallback");
+            }
+            catch
+            {
+                Logger.LogError("Failed to register for auth change event");
+            }
+        }
+
+        [JSInvokable]
+        public static void OnAuthStateChangedJsCallback(string userJson)
+        {
+            Console.WriteLine("OnAuthStateChanged" + userJson);
         }
 
         public async Task<FirebaseGoogleAuthResult> SignInWithPopup(ISet<string> signInScopes = null)
@@ -95,35 +116,20 @@ namespace BlazorUtils.Firebase
 
         public async Task<FirebaseGoogleAuthResult.GoogleAuthUser> GetCurrentUser()
         {
-            int retries = 2;
-            int tries = 0;
-
-            // Sometimes the firebase getUser API doesn't return a valid user right away
-            // Event if the user is signed in, so let's keep few retries.
-            while (tries <= retries)
+            try
             {
-                try
-                {
-                    string userJson =
-                        await JSR.InvokeAsync<string>(
-                            "window.blazor_utils.firebase_auth.google.getCurrentUser");
+                string userJson =
+                    await JSR.InvokeAsync<string>(
+                        "window.blazor_utils.firebase_auth.google.getCurrentUser");
 
-                    var googleUser = JsonSerializer.Deserialize<FirebaseGoogleAuthResult.GoogleAuthUser>(
-                        userJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    if (googleUser != null && googleUser.email != null)
-                    {
-                        return googleUser;
-                    }
-                }
-                catch { }
-
-                tries++;
-                if (tries < retries)
+                var googleUser = JsonSerializer.Deserialize<FirebaseGoogleAuthResult.GoogleAuthUser>(
+                    userJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (googleUser != null && googleUser.email != null)
                 {
-                    // Delay before next retry
-                    await Task.Delay(1000);
+                    return googleUser;
                 }
             }
+            catch { }
 
             return null;
         }
