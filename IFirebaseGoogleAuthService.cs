@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Components;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -55,5 +56,15 @@ namespace BlazorUtils.Firebase
         /// true for success, false for failure
         /// </returns>
         Task<bool> SetPersistence(string persistence);
+
+        /// <summary>
+        /// Callback which clients of this service can register to receive events
+        /// when the user signs in or signs out.
+        /// </summary>
+        /// <param name="user">
+        /// Set to the user on sign in, and set to null on sign out
+        /// </param>
+        delegate void AuthStateChangedCallbackType(FirebaseGoogleAuthResult.GoogleAuthUser user);
+        static AuthStateChangedCallbackType AuthStateChangedCallback { get; set; }
     }
 }

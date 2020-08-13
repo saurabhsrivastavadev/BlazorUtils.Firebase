@@ -14,11 +14,17 @@ namespace BlazorUtils.Firebase
         private IJSRuntime JSR { get; set; }
         private ILogger<FirebaseGoogleAuthService> Logger { get; set; }
 
+        public static IFirebaseGoogleAuthService.AuthStateChangedCallbackType AuthStateChangedCallback { get; set; }
+
         public FirebaseGoogleAuthService(IJSRuntime jsr, ILogger<FirebaseGoogleAuthService> logger)
         {
             JSR = jsr;
             Logger = logger;
 
+            AuthStateChangedCallback += _ =>
+            {
+                base.NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+            };
             RegisterForAuthStateChangedEvent();
         }
 
@@ -38,7 +44,7 @@ namespace BlazorUtils.Firebase
         [JSInvokable]
         public static void OnAuthStateChangedJsCallback(string userJson)
         {
-            Console.WriteLine("OnAuthStateChanged" + userJson);
+            AuthStateChangedCallback.Invoke(ParseUserJson(userJson));
         }
 
         public async Task<FirebaseGoogleAuthResult> SignInWithPopup(ISet<string> signInScopes = null)
@@ -122,6 +128,17 @@ namespace BlazorUtils.Firebase
                     await JSR.InvokeAsync<string>(
                         "window.blazor_utils.firebase_auth.google.getCurrentUser");
 
+                return ParseUserJson(userJson);
+            }
+            catch { }
+
+            return null;
+        }
+
+        private static FirebaseGoogleAuthResult.GoogleAuthUser ParseUserJson(string userJson)
+        {
+            try
+            {
                 var googleUser = JsonSerializer.Deserialize<FirebaseGoogleAuthResult.GoogleAuthUser>(
                     userJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (googleUser != null && googleUser.email != null)
