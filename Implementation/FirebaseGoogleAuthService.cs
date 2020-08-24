@@ -28,16 +28,17 @@ namespace BlazorUtils.Firebase
             RegisterForAuthStateChangedEvent();
         }
 
-        private void RegisterForAuthStateChangedEvent()
+        private async void RegisterForAuthStateChangedEvent()
         {
             try
             {
-                JSR.InvokeAsync<bool>("window.blazor_utils.firebase_auth.google.registerForAuthStateChange",
+                await JSR.InvokeAsync<bool>("window.blazor_utils.firebase_auth.google.registerForAuthStateChange",
                     "BlazorUtils.Firebase", "OnAuthStateChangedJsCallback");
             }
-            catch
+            catch (Exception e)
             {
                 Logger.LogError("Failed to register for auth change event");
+                Logger.LogError(e.Message);
             }
         }
 
@@ -58,9 +59,10 @@ namespace BlazorUtils.Firebase
                     await JSR.InvokeAsync<string>(
                         "window.blazor_utils.firebase_auth.google.signInWithPopup", signInScopes);
             }
-            catch
+            catch (Exception e)
             {
                 Logger.LogError("Sign in failed.");
+                Logger.LogError(e.Message);
             }
 
             FirebaseGoogleAuthResult result = ConvertJsonToAuthResult(signInResult);
@@ -82,9 +84,10 @@ namespace BlazorUtils.Firebase
                 signOutResult =
                     await JSR.InvokeAsync<string>("window.blazor_utils.firebase_auth.google.signOut");
             }
-            catch
+            catch (Exception e)
             {
                 Logger.LogError("Sign out failed.");
+                Logger.LogError(e.Message);
             }
 
             FirebaseGoogleAuthResult result = ConvertJsonToAuthResult(signOutResult);
@@ -130,7 +133,10 @@ namespace BlazorUtils.Firebase
 
                 return ParseUserJson(userJson);
             }
-            catch { }
+            catch (Exception e)
+            {
+                Logger.LogError(e.Message);
+            }
 
             return null;
         }
@@ -146,7 +152,7 @@ namespace BlazorUtils.Firebase
                     return googleUser;
                 }
             }
-            catch { }
+            catch (Exception) { }
 
             return null;
         }

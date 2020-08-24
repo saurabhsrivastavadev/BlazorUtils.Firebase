@@ -83,10 +83,10 @@ window.blazor_utils.firebase_auth.google = {
      * @param {string} assemblyName The .Net assembly containing the callback to be invoked
      * @param {string} authStateChangeCbName The .Net callback to be invoked on auth state change
      */
-    registerForAuthStateChange(assemblyName, authStateChangeCbName) {
+    registerForAuthStateChange: async function (assemblyName, authStateChangeCbName) {
 
         if (this.isRegisteredForAuthStateChange) {
-            return;
+            return true;
         }
         firebase.auth().onAuthStateChanged(user => {
 
@@ -101,6 +101,7 @@ window.blazor_utils.firebase_auth.google = {
             DotNet.invokeMethodAsync(assemblyName, authStateChangeCbName, userJson);
         });
         this.isRegisteredForAuthStateChange = true;
+        return true;
     },
 
     /**
