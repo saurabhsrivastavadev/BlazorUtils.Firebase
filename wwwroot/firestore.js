@@ -64,9 +64,9 @@ class FirestoreDocument {
         this.userDocument = {};
 
         if (params.interopObject) {
-            const { docRef, ...userDocument } = params.interopObject;
-            if (docRef) {
-                this.docRef = new FirestoreDocRef(docRef);
+            const { DocRef, ...userDocument } = params.interopObject;
+            if (DocRef) {
+                this.docRef = new FirestoreDocRef(DocRef);
             }
             if (userDocument) {
                 this.userDocument = userDocument;
@@ -86,7 +86,7 @@ class FirestoreDocument {
     getInteropObject() {
 
         return {
-            docRef: this.docRef,
+            DocRef: this.docRef,
             ...this.userDocument
         };
     }
@@ -110,10 +110,6 @@ class FirestoreOperationResult {
     constructor(success, params) {
 
         this.success = success;  /** @type {boolean} */
-        this.document = {}; /** @type {FirestoreDocument} */
-        this.errorCode = '';
-        this.errorName = '';
-        this.errorJsonStr = '';
 
         // Populate optional fields
         if (params.document) {

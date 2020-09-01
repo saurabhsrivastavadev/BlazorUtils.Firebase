@@ -5,12 +5,15 @@
 if (!window.blazor_utils) {
     window.blazor_utils = {};
 }
-if (!window.blazor_utils.firebase_auth) {
-    window.blazor_utils.firebase_auth = {};
+if (!window.blazor_utils.firebase) {
+    window.blazor_utils.firebase = {};
+}
+if (!window.blazor_utils.firebase.auth) {
+    window.blazor_utils.firebase.auth = {};
 }
 
 // Define the firebase google auth object
-window.blazor_utils.firebase_auth.google = {
+window.blazor_utils.firebase.auth.google = {
 
     provider: null,
     isRegisteredForAuthStateChange: false,

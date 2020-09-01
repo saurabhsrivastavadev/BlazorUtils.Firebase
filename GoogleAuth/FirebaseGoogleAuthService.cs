@@ -32,7 +32,7 @@ namespace BlazorUtils.Firebase
         {
             try
             {
-                await JSR.InvokeAsync<bool>("window.blazor_utils.firebase_auth.google.registerForAuthStateChange",
+                await JSR.InvokeAsync<bool>("window.blazor_utils.firebase.auth.google.registerForAuthStateChange",
                     "BlazorUtils.Firebase", "OnAuthStateChangedJsCallback");
             }
             catch (Exception e)
@@ -57,7 +57,7 @@ namespace BlazorUtils.Firebase
             {
                 signInResult =
                     await JSR.InvokeAsync<string>(
-                        "window.blazor_utils.firebase_auth.google.signInWithPopup", signInScopes);
+                        "window.blazor_utils.firebase.auth.google.signInWithPopup", signInScopes);
             }
             catch (Exception e)
             {
@@ -82,7 +82,7 @@ namespace BlazorUtils.Firebase
             try
             {
                 signOutResult =
-                    await JSR.InvokeAsync<string>("window.blazor_utils.firebase_auth.google.signOut");
+                    await JSR.InvokeAsync<string>("window.blazor_utils.firebase.auth.google.signOut");
             }
             catch (Exception e)
             {
@@ -129,7 +129,7 @@ namespace BlazorUtils.Firebase
             {
                 string userJson =
                     await JSR.InvokeAsync<string>(
-                        "window.blazor_utils.firebase_auth.google.getCurrentUser");
+                        "window.blazor_utils.firebase.auth.google.getCurrentUser");
 
                 return ParseUserJson(userJson);
             }
@@ -160,13 +160,13 @@ namespace BlazorUtils.Firebase
         public async Task<bool> IsSignedIn()
         {
             return await JSR.InvokeAsync<bool>(
-                    "window.blazor_utils.firebase_auth.google.isSignedIn");
+                    "window.blazor_utils.firebase.auth.google.isSignedIn");
         }
 
         public async Task<bool> SetPersistence(string persistence)
         {
             return await JSR.InvokeAsync<bool>(
-                    "window.blazor_utils.firebase_auth.google.setPersistence", persistence);
+                    "window.blazor_utils.firebase.auth.google.setPersistence", persistence);
         }
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
