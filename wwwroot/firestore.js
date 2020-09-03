@@ -104,6 +104,7 @@ class FirestoreOperationResult {
      * @param {any} params
      * Object containing one or more of below fields.
      * @type {FirestoreDocument} document
+     * @type {FirestoreDocument[]} documentList
      * @type {any} error
      * Any error object which will be stringified and stored as string
      */
@@ -114,6 +115,12 @@ class FirestoreOperationResult {
         // Populate optional fields
         if (params.document) {
             this.document = params.document.getInteropObject();
+        }
+        if (params.documentList) {
+            this.documentList = [];
+            params.documentList.forEach(d => {
+                this.documentList.push(d.getInteropObject());
+            });
         }
         if (params.error) {
 
@@ -195,6 +202,33 @@ window.blazor_utils.firebase.firestore = {
                     new FirestoreOperationResult(
                         false, { error: { name: 'Document does not exist.' } }));
             }
+
+        } catch (error) {
+
+            return JSON.stringify(
+                new FirestoreOperationResult(false, { error: error }));
+        }
+    },
+
+    getAllDocuments: async function (collection) {
+
+        if (this.db == null) {
+            this.db = firebase.firestore();
+        }
+
+        try {
+
+            let snapshot = await this.db.collection(collection).get();
+            let docList = [];
+            snapshot.forEach(doc => {
+                docList.push(new FirestoreDocument({
+                    docRef: new FirestoreDocRef(doc.ref),
+                    userDocument: doc.data()
+                }));
+            });
+
+            return JSON.stringify(
+                new FirestoreOperationResult(true, { documentList: docList }));
 
         } catch (error) {
 

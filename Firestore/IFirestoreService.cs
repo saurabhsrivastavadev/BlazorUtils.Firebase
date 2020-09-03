@@ -38,9 +38,25 @@ namespace BlazorUtils.Firebase
         /// The firestore document id for the document to be fetched.
         /// </param>
         /// <returns>
-        /// The document object fetched from firestore.
+        /// Firestore operation result which contains the document object fetched from
+        /// firestore if the operation is successful.
         /// </returns>
         Task<FirestoreOperationResult<T>> GetDocument<T>(string collection, string docId) where T : IFirestoreDocument;
+
+        /// <summary>
+        /// Fetch all documents from the specified firestore collection
+        /// </summary>
+        /// <typeparam name="T">
+        /// Type of document fetched from the firestore.
+        /// </typeparam>
+        /// <param name="collection">
+        /// The firestore collection path.
+        /// </param>
+        /// <returns>
+        /// Firestore operation result which contains the document object list fetched from
+        /// firestore if the operation is successful.
+        /// </returns>
+        Task<FirestoreOperationResult<T>> GetAllDocuments<T>(string collection) where T : IFirestoreDocument;
 
         /// <summary>
         /// Firestore document reference

@@ -87,6 +87,34 @@ namespace BlazorUtils.Firebase
             return ConvertJsonToResult<T>(operationResult);
         }
 
+        public async Task<FirestoreOperationResult<T>>
+            GetAllDocuments<T>(string collection) where T : IFirestoreService.IFirestoreDocument
+        {
+            string operationResult = string.Empty;
+
+            // Validate
+            if (string.IsNullOrEmpty(collection))
+            {
+                Logger.LogError("Invalid firestore collection");
+                return new FirestoreOperationResult<T> { Success = false };
+            }
+
+            try
+            {
+                operationResult =
+                    await JSR.InvokeAsync<string>(
+                        "window.blazor_utils.firebase.firestore.getAllDocuments",
+                        collection);
+            }
+            catch (Exception e)
+            {
+                Logger.LogError("Failed to get firestore document list");
+                Logger.LogError(e.Message);
+            }
+
+            return ConvertJsonToResult<T>(operationResult);
+        }
+
         private FirestoreOperationResult<T>
             ConvertJsonToResult<T>(string json) where T : IFirestoreService.IFirestoreDocument
         {
