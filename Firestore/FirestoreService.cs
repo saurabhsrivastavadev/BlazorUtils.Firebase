@@ -22,7 +22,7 @@ namespace BlazorUtils.Firebase
         }
 
         public async Task<FirestoreOperationResult<T>>
-            AddDocument<T>(string collection, T document) where T: IFirestoreService.IFirestoreDocument
+            AddDocument<T>(string collection, T document) where T : IFirestoreService.IFirestoreDocument
         {
             string operationResult = string.Empty;
 
@@ -113,6 +113,107 @@ namespace BlazorUtils.Firebase
             }
 
             return ConvertJsonToResult<T>(operationResult);
+        }
+
+        public async Task<FirestoreOperationResult<T>> SetDocument<T>(
+            string collection, string docId, T document) where T : IFirestoreService.IFirestoreDocument
+        {
+            string operationResult = string.Empty;
+
+            // Validate
+            if (string.IsNullOrWhiteSpace(collection))
+            {
+                Logger.LogError("Invalid firestore collection.");
+                return new FirestoreOperationResult<T>
+                {
+                    Success = false,
+                    ErrorName = "Invalid Arguments"
+                };
+            }
+            if (string.IsNullOrWhiteSpace(docId))
+            {
+                Logger.LogError("Invalid document id to set");
+                return new FirestoreOperationResult<T>
+                {
+                    Success = false,
+                    ErrorName = "Invalid Arguments"
+                };
+            }
+            if (document == null)
+            {
+                Logger.LogError("null document to update");
+                return new FirestoreOperationResult<T>
+                {
+                    Success = false,
+                    ErrorName = "Invalid Arguments"
+                };
+            }
+
+            try
+            {
+                operationResult =
+                    await JSR.InvokeAsync<string>(
+                        "window.blazor_utils.firebase.firestore.setDocument",
+                        collection, docId, JsonSerializer.Serialize<T>(document));
+            }
+            catch (Exception e)
+            {
+                Logger.LogError("Failed to set firestore document");
+                Logger.LogError(e.Message);
+            }
+
+            return ConvertJsonToResult<T>(operationResult);
+        }
+
+        public async Task<FirestoreOperationResult<P>> UpdateDocument<P, C>(
+            string collection, string docId, C document) where P : C
+                                                         where C : IFirestoreService.IFirestoreDocument
+        {
+            string operationResult = string.Empty;
+
+            // Validate
+            if (string.IsNullOrWhiteSpace(collection))
+            {
+                Logger.LogError("Invalid firestore collection.");
+                return new FirestoreOperationResult<P>
+                {
+                    Success = false,
+                    ErrorName = "Invalid Arguments"
+                };
+            }
+            if (string.IsNullOrWhiteSpace(docId))
+            {
+                Logger.LogError("Invalid document id to set");
+                return new FirestoreOperationResult<P>
+                {
+                    Success = false,
+                    ErrorName = "Invalid Arguments"
+                };
+            }
+            if (document == null)
+            {
+                Logger.LogError("null document to update");
+                return new FirestoreOperationResult<P>
+                {
+                    Success = false,
+                    ErrorName = "Invalid Arguments"
+                };
+            }
+
+            try
+            {
+                operationResult =
+                    await JSR.InvokeAsync<string>(
+                        "window.blazor_utils.firebase.firestore.updateDocument",
+                        collection, docId, JsonSerializer.Serialize<C>(document));
+            }
+            catch (Exception e)
+            {
+                Logger.LogError("Failed to update firestore document");
+                Logger.LogError(e.Message);
+            }
+
+            return ConvertJsonToResult<P>(operationResult);
         }
 
         private FirestoreOperationResult<T>

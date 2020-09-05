@@ -59,6 +59,52 @@ namespace BlazorUtils.Firebase
         Task<FirestoreOperationResult<T>> GetAllDocuments<T>(string collection) where T : IFirestoreDocument;
 
         /// <summary>
+        /// Set the specified document (with docId) in firestore
+        /// Creates a new document (with specified docId) if no document exists
+        /// Replaces the document completely with the new one if one exists.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="collection">
+        /// Firestore collection where the document is located
+        /// </param>
+        /// <param name="docId">
+        /// Document id used to identify the document in the collection
+        /// </param>
+        /// <param name="document">
+        /// New document object which will overwrite the existing document in firestore.
+        /// </param>
+        /// <returns>
+        /// Operation result containing the updated document.
+        /// </returns>
+        Task<FirestoreOperationResult<T>> SetDocument<T>(
+            string collection, string docId, T document) where T : IFirestoreDocument;
+
+        /// <summary>
+        /// Update the firestore document with only the fields of specified document.
+        /// </summary>
+        /// <typeparam name="P">
+        /// Parent document class, which is the complete document stored in firestore.
+        /// </typeparam>
+        /// <typeparam name="C">
+        /// Child document class, which is a subset of fields we wish to update with this operation.
+        /// </typeparam>
+        /// <param name="collection">
+        /// Firestore collection where the document to update resides.
+        /// </param>
+        /// <param name="docId">
+        /// Firestore document id for the document to update.
+        /// </param>
+        /// <param name="document">
+        /// Document containing only the fields that need to be updated in the firestore document.
+        /// Do not keep any fields in this Document which need not be updated in firestore document.
+        /// </param>
+        /// <returns>
+        /// Operation result indicating success or failure.
+        /// </returns>
+        Task<FirestoreOperationResult<P>> UpdateDocument<P, C>(
+            string collection, string docId, C document) where C : IFirestoreDocument where P : C;
+
+        /// <summary>
         /// Firestore document reference
         /// </summary>
         public class FirestoreDocRef

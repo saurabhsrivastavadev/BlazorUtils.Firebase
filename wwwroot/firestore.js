@@ -113,26 +113,28 @@ class FirestoreOperationResult {
         this.success = success;  /** @type {boolean} */
 
         // Populate optional fields
-        if (params.document) {
-            this.document = params.document.getInteropObject();
-        }
-        if (params.documentList) {
-            this.documentList = [];
-            params.documentList.forEach(d => {
-                this.documentList.push(d.getInteropObject());
-            });
-        }
-        if (params.error) {
-
-            // Capture the stringified error since we don't always know the error structure
-            this.errorJsonStr = JSON.stringify(params.error);
-
-            // Parse the expected error fields
-            if (params.error.code) {
-                this.errorCode = params.error.code;
+        if (params) {
+            if (params.document) {
+                this.document = params.document.getInteropObject();
             }
-            if (params.error.name) {
-                this.errorName = params.error.name;
+            if (params.documentList) {
+                this.documentList = [];
+                params.documentList.forEach(d => {
+                    this.documentList.push(d.getInteropObject());
+                });
+            }
+            if (params.error) {
+
+                // Capture the stringified error since we don't always know the error structure
+                this.errorJsonStr = JSON.stringify(params.error);
+
+                // Parse the expected error fields
+                if (params.error.code) {
+                    this.errorCode = params.error.code;
+                }
+                if (params.error.name) {
+                    this.errorName = params.error.name;
+                }
             }
         }
     }
@@ -234,6 +236,48 @@ window.blazor_utils.firebase.firestore = {
 
             return JSON.stringify(
                 new FirestoreOperationResult(false, { error: error }));
+        }
+    },
+
+    setDocument: async function (collection, docId, documentStr) {
+
+        if (this.db == null) {
+            this.db = firebase.firestore();
+        }
+
+        try {
+
+            let doc = new FirestoreDocument({ interopObject: JSON.parse(documentStr) });
+            let docRef = await this.db.collection(collection).doc(docId);
+
+            await docRef.set(doc.userDocument);
+
+            return JSON.stringify(new FirestoreOperationResult(true, { document: doc }));
+
+        } catch (error) {
+
+            return JSON.stringify(new FirestoreOperationResult(false, { error: error }));
+        }
+    },
+
+    updateDocument: async function (collection, docId, documentStr) {
+
+        if (this.db == null) {
+            this.db = firebase.firestore();
+        }
+
+        try {
+
+            let doc = new FirestoreDocument({ interopObject: JSON.parse(documentStr) });
+            let docRef = await this.db.collection(collection).doc(docId);
+
+            await docRef.update(doc.userDocument);
+
+            return JSON.stringify(new FirestoreOperationResult(true));
+
+        } catch (error) {
+
+            return JSON.stringify(new FirestoreOperationResult(false, { error: error }));
         }
     },
 };
