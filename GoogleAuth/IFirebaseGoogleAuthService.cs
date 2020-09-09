@@ -65,6 +65,6 @@ namespace BlazorUtils.Firebase
         /// Set to the user on sign in, and set to null on sign out
         /// </param>
         delegate void AuthStateChangedCallbackType(FirebaseGoogleAuthResult.GoogleAuthUser user);
-        static AuthStateChangedCallbackType AuthStateChangedCallback { get; set; }
+        AuthStateChangedCallbackType AuthStateChangedCallback { get; set; }
     }
 }

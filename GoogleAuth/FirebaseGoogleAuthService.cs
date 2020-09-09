@@ -14,10 +14,20 @@ namespace BlazorUtils.Firebase
         private IJSRuntime JSR { get; set; }
         private ILogger<FirebaseGoogleAuthService> Logger { get; set; }
 
-        public static IFirebaseGoogleAuthService.AuthStateChangedCallbackType AuthStateChangedCallback { get; set; }
+        public IFirebaseGoogleAuthService.AuthStateChangedCallbackType AuthStateChangedCallback { get; set; }
+
+        // Hold instance for callback invocation from javascript
+        private static WeakReference<FirebaseGoogleAuthService> Instance { get; set; }
 
         public FirebaseGoogleAuthService(IJSRuntime jsr, ILogger<FirebaseGoogleAuthService> logger)
         {
+            if (Instance != null)
+            {
+                throw new Exception("Only one instance of FirebaseGoogleAuthService allowed.");
+            }
+
+            Instance = new WeakReference<FirebaseGoogleAuthService>(this);
+
             JSR = jsr;
             Logger = logger;
 
@@ -45,7 +55,15 @@ namespace BlazorUtils.Firebase
         [JSInvokable]
         public static void OnAuthStateChangedJsCallback(string userJson)
         {
-            AuthStateChangedCallback.Invoke(ParseUserJson(userJson));
+            FirebaseGoogleAuthService instance;
+            if (Instance.TryGetTarget(out instance))
+            {
+                instance.AuthStateChangedCallback.Invoke(ParseUserJson(userJson));
+            }
+            else
+            {
+                Console.WriteLine("Failed to get auth service weak reference instance");
+            }
         }
 
         public async Task<FirebaseGoogleAuthResult> SignInWithPopup(ISet<string> signInScopes = null)
