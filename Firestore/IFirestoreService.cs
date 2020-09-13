@@ -105,6 +105,27 @@ namespace BlazorUtils.Firebase
             string collection, string docId, C document) where C : IFirestoreDocument where P : C;
 
         /// <summary>
+        /// Callback received on subscription to document updates
+        /// </summary>
+        /// <param name="document">The updated document</param>
+        delegate void DocumentUpdateCallback(IFirestoreDocument document);
+
+        /// <summary>
+        /// Subscribe to listen to any updates to a firestore document
+        /// </summary>
+        /// <param name="collection">
+        /// Firestore collection where the document to subscribe resides.
+        /// </param>
+        /// <param name="docId">Firestore Document ID</param>
+        /// <param name="callback">Subscription Callback</param>
+        /// <returns>Operation result indicating success or failure</returns>
+        Task<FirestoreOperationResult<T>> SubscribeForDocumentUpdates<T>(
+            string collection, string docId, DocumentUpdateCallback callback) where T : IFirestoreDocument;
+
+        // todo
+        //Task<FirestoreOperationResult<T>> UnsubscribeForDocumentUpdates<T>(string docId) where T : IFirestoreDocument;
+
+        /// <summary>
         /// Firestore document reference
         /// </summary>
         public class FirestoreDocRef

@@ -280,4 +280,31 @@ window.blazor_utils.firebase.firestore = {
             return JSON.stringify(new FirestoreOperationResult(false, { error: error }));
         }
     },
+
+    onSnapshot: async function (collection, docId, assemblyName, authStateChangeCbName) {
+
+        if (this.db == null) {
+            this.db = firebase.firestore();
+        }
+
+        try {
+
+            this.db.collection(collection).doc(docId).onSnapshot(doc => {
+
+                let document = new FirestoreDocument({
+                    docRef: new FirestoreDocRef(doc.ref),
+                    userDocument: doc.data()
+                });
+
+                DotNet.invokeMethodAsync(assemblyName, authStateChangeCbName,
+                    docId, JSON.stringify(document.getInteropObject()));
+            });
+
+            return JSON.stringify(new FirestoreOperationResult(true));
+
+        } catch (error) {
+
+            return JSON.stringify(new FirestoreOperationResult(false, { error: error }));
+        }
+    },
 };
