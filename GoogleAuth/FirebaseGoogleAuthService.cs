@@ -40,16 +40,22 @@ namespace BlazorUtils.Firebase
 
         private async void RegisterForAuthStateChangedEvent()
         {
-            try
+            int retries = 0;
+            while (retries++ < 5)
             {
-                await JSR.InvokeAsync<bool>("window.blazor_utils.firebase.auth.google.registerForAuthStateChange",
-                    "BlazorUtils.Firebase", "OnAuthStateChangedJsCallback");
+                try
+                {
+                    await JSR.InvokeAsync<bool>("window.blazor_utils.firebase.auth.google.registerForAuthStateChange",
+                        "BlazorUtils.Firebase", "OnAuthStateChangedJsCallback");
+                    return;
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("RegisterForAuthStateChangedEvent retry.");
+                    await Task.Delay(200);
+                }
             }
-            catch (Exception e)
-            {
-                Logger.LogError("Failed to register for auth change event");
-                Logger.LogError(e.Message);
-            }
+            Logger.LogError("Failed to register for auth change event");
         }
 
         [JSInvokable]
@@ -143,17 +149,22 @@ namespace BlazorUtils.Firebase
 
         public async Task<FirebaseGoogleAuthResult.GoogleAuthUser> GetCurrentUser()
         {
-            try
+            int retries = 0;
+            while (retries++ < 5)
             {
-                string userJson =
-                    await JSR.InvokeAsync<string>(
-                        "window.blazor_utils.firebase.auth.google.getCurrentUser");
+                try
+                {
+                    string userJson =
+                        await JSR.InvokeAsync<string>(
+                            "window.blazor_utils.firebase.auth.google.getCurrentUser");
 
-                return ParseUserJson(userJson);
-            }
-            catch (Exception e)
-            {
-                Logger.LogError(e.Message);
+                    return ParseUserJson(userJson);
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("GetCurrentUser retry.");
+                    await Task.Delay(200);
+                }
             }
 
             return null;
@@ -177,14 +188,44 @@ namespace BlazorUtils.Firebase
 
         public async Task<bool> IsSignedIn()
         {
-            return await JSR.InvokeAsync<bool>(
-                    "window.blazor_utils.firebase.auth.google.isSignedIn");
+            int retries = 0;
+            Exception failure = null;
+            while (retries++ < 5)
+            {
+                try
+                {
+                    return await JSR.InvokeAsync<bool>(
+                        "window.blazor_utils.firebase.auth.google.isSignedIn");
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("isSignedIn retry.");
+                    failure = e;
+                    await Task.Delay(200);
+                }
+            }
+            throw failure;
         }
 
         public async Task<bool> SetPersistence(string persistence)
         {
-            return await JSR.InvokeAsync<bool>(
-                    "window.blazor_utils.firebase.auth.google.setPersistence", persistence);
+            int retries = 0;
+            Exception failure = null;
+            while (retries++ < 5)
+            {
+                try
+                {
+                    return await JSR.InvokeAsync<bool>(
+                            "window.blazor_utils.firebase.auth.google.setPersistence", persistence);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("isSignedIn retry.");
+                    failure = e;
+                    await Task.Delay(200);
+                }
+            }
+            throw failure;
         }
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
