@@ -18,6 +18,17 @@ namespace BlazorUtils.Firebase
         Task<FirebaseGoogleAuthResult> SignInWithPopup(ISet<string> signInScopes = null);
 
         /// <summary>
+        /// Sign in user with redirect via firebase google auth sdk.
+        /// </summary>
+        /// <param name="signInScopes">
+        /// Specify OAuth 2.0 scopes to be requested during sign in.
+        /// Below is the list of scopes for Google Authentication:
+        /// https://developers.google.com/identity/protocols/oauth2/scopes
+        /// </param>
+        /// <returns></returns>
+        Task<FirebaseGoogleAuthResult> SignInWithRedirect(ISet<string> signInScopes = null);
+
+        /// <summary>
         /// Sign out the current user.
         /// </summary>
         /// <returns>

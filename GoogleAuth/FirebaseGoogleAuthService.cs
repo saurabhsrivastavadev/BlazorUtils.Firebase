@@ -72,16 +72,27 @@ namespace BlazorUtils.Firebase
             }
         }
 
-        public async Task<FirebaseGoogleAuthResult> SignInWithPopup(ISet<string> signInScopes = null)
+        public Task<FirebaseGoogleAuthResult> SignInWithPopup(ISet<string> signInScopes = null)
+        {
+            return SignIn(signInScopes, true);
+        }
+        public Task<FirebaseGoogleAuthResult> SignInWithRedirect(ISet<string> signInScopes = null)
+        {
+            return SignIn(signInScopes, false);
+        }
+
+        private async Task<FirebaseGoogleAuthResult> SignIn(
+            ISet<string> signInScopes, bool signInWithPopup)
         {
             string signInResult = string.Empty;
             bool wasUserSignedIn = await IsSignedIn();
 
+            string jsMethod = signInWithPopup ? 
+                "window.blazor_utils.firebase.auth.google.signInWithPopup":
+                "window.blazor_utils.firebase.auth.google.signInWithRedirect";
             try
             {
-                signInResult =
-                    await JSR.InvokeAsync<string>(
-                        "window.blazor_utils.firebase.auth.google.signInWithPopup", signInScopes);
+                signInResult = await JSR.InvokeAsync<string>(jsMethod, signInScopes);
             }
             catch (Exception e)
             {

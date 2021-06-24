@@ -28,6 +28,31 @@ window.blazor_utils.firebase.auth.google = {
      */
     signInWithPopup: async function (signInScopeList) {
 
+        return this.signIn(signInScopeList, "popup");
+    },
+
+    /**
+     * Sign in using Google auth with a redirect.
+     * The current tab will be redirected for login.
+     * @param {string[]} signInScopeList
+     * The list of Google API scopes that will be requested during sign in
+     * @returns {string} Stringified auth result object
+     */
+    signInWithRedirect: async function (signInScopeList) {
+
+        return this.signIn(signInScopeList, "redirect");
+    },
+
+    /**
+     * Sign in using Google auth with redirect or popup window.
+     * @param {string[]} signInScopeList
+     * The list of Google API scopes that will be requested during sign in
+     * @param {string} loginType 
+     * The login type must be passed in as "popup" or "redirect"
+     * @returns {string} Stringified auth result object
+     */
+    signIn: async function (signInScopeList, loginType) {
+
         if (this.provider == null) {
             this.provider = new firebase.auth.GoogleAuthProvider();
         }
@@ -45,7 +70,14 @@ window.blazor_utils.firebase.auth.google = {
         let resultObj;
         try {
 
-            resultObj = await firebase.auth().signInWithPopup(this.provider);
+            if (loginType === "popup") {
+                resultObj = await firebase.auth().signInWithPopup(this.provider);
+            } else if (loginType === "redirect") {
+                resultObj = await firebase.auth().signInWithRedirect(this.provider);
+            } else {
+                throw { message: `Invalid login type: ${loginType}` };
+            }
+
             resultObj.success = true;
             this.signedInUser = resultObj.user;
 
