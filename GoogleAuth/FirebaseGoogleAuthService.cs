@@ -11,7 +11,7 @@ namespace BlazorUtils.Firebase
 {
     public class FirebaseGoogleAuthService : AuthenticationStateProvider, IFirebaseGoogleAuthService
     {
-        private IJSRuntime JSR { get; set; }
+        private readonly Lazy<Task<IJSObjectReference>> moduleTask;
         private ILogger<FirebaseGoogleAuthService> Logger { get; set; }
 
         public IFirebaseGoogleAuthService.AuthStateChangedCallbackType AuthStateChangedCallback { get; set; }
@@ -28,8 +28,10 @@ namespace BlazorUtils.Firebase
 
             Instance = new WeakReference<FirebaseGoogleAuthService>(this);
 
-            JSR = jsr;
             Logger = logger;
+
+            moduleTask = new(() => jsr.InvokeAsync<IJSObjectReference>(
+               "import", "./_content/BlazorUtils.Firebase/auth.js").AsTask());
 
             AuthStateChangedCallback += _ =>
             {
@@ -40,12 +42,13 @@ namespace BlazorUtils.Firebase
 
         private async void RegisterForAuthStateChangedEvent()
         {
+            var module = await moduleTask.Value;
             int retries = 0;
             while (retries++ < 5)
             {
                 try
                 {
-                    await JSR.InvokeAsync<bool>("window.blazor_utils.firebase.auth.google.registerForAuthStateChange",
+                    await module.InvokeAsync<bool>("registerForAuthStateChange",
                         "BlazorUtils.Firebase", "OnAuthStateChangedJsCallback");
                     return;
                 }
@@ -84,15 +87,15 @@ namespace BlazorUtils.Firebase
         private async Task<FirebaseGoogleAuthResult> SignIn(
             ISet<string> signInScopes, bool signInWithPopup)
         {
+            var module = await moduleTask.Value;
             string signInResult = string.Empty;
             bool wasUserSignedIn = await IsSignedIn();
 
             string jsMethod = signInWithPopup ? 
-                "window.blazor_utils.firebase.auth.google.signInWithPopup":
-                "window.blazor_utils.firebase.auth.google.signInWithRedirect";
+                "signInWithPopup": "signInWithRedirect";
             try
             {
-                signInResult = await JSR.InvokeAsync<string>(jsMethod, signInScopes);
+                signInResult = await module.InvokeAsync<string>(jsMethod, signInScopes);
             }
             catch (Exception e)
             {
@@ -111,13 +114,14 @@ namespace BlazorUtils.Firebase
 
         public async Task<FirebaseGoogleAuthResult> SignOut()
         {
+            var module = await moduleTask.Value;
             string signOutResult = string.Empty;
             bool wasUserSignedIn = await IsSignedIn();
 
             try
             {
                 signOutResult =
-                    await JSR.InvokeAsync<string>("window.blazor_utils.firebase.auth.google.signOut");
+                    await module.InvokeAsync<string>("signOut");
             }
             catch (Exception e)
             {
@@ -160,14 +164,14 @@ namespace BlazorUtils.Firebase
 
         public async Task<FirebaseGoogleAuthResult.GoogleAuthUser> GetCurrentUser()
         {
+            var module = await moduleTask.Value;
             int retries = 0;
             while (retries++ < 5)
             {
                 try
                 {
                     string userJson =
-                        await JSR.InvokeAsync<string>(
-                            "window.blazor_utils.firebase.auth.google.getCurrentUser");
+                        await module.InvokeAsync<string>("getCurrentUser");
 
                     return ParseUserJson(userJson);
                 }
@@ -199,14 +203,14 @@ namespace BlazorUtils.Firebase
 
         public async Task<bool> IsSignedIn()
         {
+            var module = await moduleTask.Value;
             int retries = 0;
             Exception failure = null;
             while (retries++ < 5)
             {
                 try
                 {
-                    return await JSR.InvokeAsync<bool>(
-                        "window.blazor_utils.firebase.auth.google.isSignedIn");
+                    return await module.InvokeAsync<bool>("isSignedIn");
                 }
                 catch (Exception e)
                 {
@@ -220,14 +224,14 @@ namespace BlazorUtils.Firebase
 
         public async Task<bool> SetPersistence(string persistence)
         {
+            var module = await moduleTask.Value;
             int retries = 0;
             Exception failure = null;
             while (retries++ < 5)
             {
                 try
                 {
-                    return await JSR.InvokeAsync<bool>(
-                            "window.blazor_utils.firebase.auth.google.setPersistence", persistence);
+                    return await module.InvokeAsync<bool>("setPersistence", persistence);
                 }
                 catch (Exception e)
                 {
