@@ -32,12 +32,33 @@ namespace BlazorUtils.Firebase
 
             moduleTask = new(() => jsr.InvokeAsync<IJSObjectReference>(
                "import", "./_content/BlazorUtils.Firebase/auth.js").AsTask());
+            InitFirebaseSdk();
 
             AuthStateChangedCallback += _ =>
             {
                 base.NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
             };
             RegisterForAuthStateChangedEvent();
+        }
+
+        private async void InitFirebaseSdk()
+        {
+            var module = await moduleTask.Value;
+            int retries = 0;
+            while (retries++ < 5)
+            {
+                try
+                {
+                    await module.InvokeVoidAsync("loadFirebaseSdk");
+                    return;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    Console.WriteLine("loadFirebaseSdk retry.");
+                    await Task.Delay(200);
+                }
+            }
         }
 
         private async void RegisterForAuthStateChangedEvent()

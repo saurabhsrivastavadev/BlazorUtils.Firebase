@@ -4,6 +4,42 @@
 let provider = null;
 let isRegisteredForAuthStateChange = false;
 let signedInUser = null;
+let isFirebaseSdkLoaded = false;
+
+/**
+ * Load the required firebase SDK scripts.
+ * This must be the first API executed on this module.
+ */
+export async function loadFirebaseSdk() {
+
+    if (!isFirebaseSdkLoaded) {
+
+        isFirebaseSdkLoaded = true;
+
+        // Firebase setup:: https://firebase.google.com/docs/web/setup
+        // Firebase App(the core Firebase SDK) is always required and must be listed first
+        // Order must be app script, followed by all required firebase modules, then init 
+        let firebaseAppScript = document.createElement('script');
+        firebaseAppScript.src = "/__/firebase/8.6.8/firebase-app.js";
+        // Set async to false to ensure that scripts load synchronously since the order is important.
+        firebaseAppScript.async = false; 
+
+        let firebaseAuthScript = document.createElement('script');
+        firebaseAuthScript.src = "/__/firebase/8.6.8/firebase-auth.js";
+        firebaseAuthScript.async = false;
+
+        let firebaseInitScript = document.createElement('script');
+        firebaseInitScript.src = "/__/firebase/init.js";
+        firebaseInitScript.async = false;
+
+        let firstScriptTag = document.getElementsByTagName('script')[0];
+
+        // Insert app script before first script element in the document, then auth, then init
+        firstScriptTag.parentNode.insertBefore(firebaseAppScript, firstScriptTag);
+        firstScriptTag.parentNode.insertBefore(firebaseAuthScript, firebaseAppScript.nextSibling);
+        firstScriptTag.parentNode.insertBefore(firebaseInitScript, firebaseAuthScript.nextSibling);
+    }
+}
 
 /** 
  * Sign in using Google auth with a popup window.
