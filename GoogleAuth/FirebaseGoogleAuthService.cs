@@ -6,12 +6,15 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
+using BlazorUtils.Firebase.Core;
 
 namespace BlazorUtils.Firebase
 {
     public class FirebaseGoogleAuthService : AuthenticationStateProvider, IFirebaseGoogleAuthService
     {
-        private readonly Lazy<Task<IJSObjectReference>> moduleTask;
+        private readonly Lazy<Task<IJSObjectReference>> initModuleTask;
+        private readonly Lazy<Task<IJSObjectReference>> authModuleTask;
+
         private ILogger<FirebaseGoogleAuthService> Logger { get; set; }
 
         public IFirebaseGoogleAuthService.AuthStateChangedCallbackType AuthStateChangedCallback { get; set; }
@@ -30,9 +33,12 @@ namespace BlazorUtils.Firebase
 
             Logger = logger;
 
-            moduleTask = new(() => jsr.InvokeAsync<IJSObjectReference>(
+            initModuleTask = new(() => jsr.InvokeAsync<IJSObjectReference>(
+               "import", "./_content/BlazorUtils.Firebase/init.js").AsTask());
+            authModuleTask = new(() => jsr.InvokeAsync<IJSObjectReference>(
                "import", "./_content/BlazorUtils.Firebase/auth.js").AsTask());
-            InitFirebaseSdk();
+
+            Core.Firebase.InitFirebaseSdk(initModuleTask);
 
             AuthStateChangedCallback += _ =>
             {
@@ -41,29 +47,9 @@ namespace BlazorUtils.Firebase
             RegisterForAuthStateChangedEvent();
         }
 
-        private async void InitFirebaseSdk()
-        {
-            var module = await moduleTask.Value;
-            int retries = 0;
-            while (retries++ < 5)
-            {
-                try
-                {
-                    await module.InvokeVoidAsync("loadFirebaseSdk");
-                    return;
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    Console.WriteLine("loadFirebaseSdk retry.");
-                    await Task.Delay(200);
-                }
-            }
-        }
-
         private async void RegisterForAuthStateChangedEvent()
         {
-            var module = await moduleTask.Value;
+            var module = await authModuleTask.Value;
             int retries = 0;
             while (retries++ < 5)
             {
@@ -108,7 +94,7 @@ namespace BlazorUtils.Firebase
         private async Task<FirebaseGoogleAuthResult> SignIn(
             ISet<string> signInScopes, bool signInWithPopup)
         {
-            var module = await moduleTask.Value;
+            var module = await authModuleTask.Value;
             string signInResult = string.Empty;
             bool wasUserSignedIn = await IsSignedIn();
 
@@ -135,7 +121,7 @@ namespace BlazorUtils.Firebase
 
         public async Task<FirebaseGoogleAuthResult> SignOut()
         {
-            var module = await moduleTask.Value;
+            var module = await authModuleTask.Value;
             string signOutResult = string.Empty;
             bool wasUserSignedIn = await IsSignedIn();
 
@@ -185,7 +171,7 @@ namespace BlazorUtils.Firebase
 
         public async Task<FirebaseGoogleAuthResult.GoogleAuthUser> GetCurrentUser()
         {
-            var module = await moduleTask.Value;
+            var module = await authModuleTask.Value;
             int retries = 0;
             while (retries++ < 5)
             {
@@ -224,7 +210,7 @@ namespace BlazorUtils.Firebase
 
         public async Task<bool> IsSignedIn()
         {
-            var module = await moduleTask.Value;
+            var module = await authModuleTask.Value;
             int retries = 0;
             Exception failure = null;
             while (retries++ < 5)
@@ -245,7 +231,7 @@ namespace BlazorUtils.Firebase
 
         public async Task<bool> SetPersistence(string persistence)
         {
-            var module = await moduleTask.Value;
+            var module = await authModuleTask.Value;
             int retries = 0;
             Exception failure = null;
             while (retries++ < 5)
