@@ -1,21 +1,10 @@
-
-// Wrappers on top of firebase javascript sdk
-
-// Initialize our base objects
-if (!window.blazor_utils) {
-    window.blazor_utils = {};
-}
-if (!window.blazor_utils.firebase) {
-    window.blazor_utils.firebase = {};
-}
-if (!window.blazor_utils.firebase.firestore) {
-    window.blazor_utils.firebase.firestore = {};
-}
+// firestore.js
+// Wrappers on top of firestore javascript sdk
 
 /**
  * Class representing a firestore document reference data
  * */
-class FirestoreDocRef {
+export class FirestoreDocRef {
 
     /**
      * Constructor
@@ -44,7 +33,7 @@ class FirestoreDocRef {
  * unknown fields, and the firstore document reference object.
  * This class maps to the IFirestoreDocument in C# layer.
  * */
-class FirestoreDocument {
+export class FirestoreDocument {
 
     /**
      * Constructor
@@ -95,7 +84,7 @@ class FirestoreDocument {
 /**
  * Class representing a firestore operation result
  * */
-class FirestoreOperationResult {
+export class FirestoreOperationResult {
 
     /**
      * Specify success or failure, followed by call specific params
@@ -140,171 +129,167 @@ class FirestoreOperationResult {
     }
 }
 
-// Define the firebase firestore object
-window.blazor_utils.firebase.firestore = {
+// Firestore database object
+let db = null;
 
-    // Firestore database object
-    db: null,
+/**
+ * Create a document in the specified collection.
+ * @param {string} collection
+ * The firestore collection to which to add the new document.
+ * @param {string} documentStr
+ * JSON string for the document to store in the above collection.
+ * @returns {string}
+ * FirestoreOperationResult json object stringified.
+ * This result object is obtained with call to _getResultObject
+ */
+export async function addDocument(collection, documentStr) {
 
-    /**
-     * Create a document in the specified collection.
-     * @param {string} collection
-     * The firestore collection to which to add the new document.
-     * @param {string} documentStr
-     * JSON string for the document to store in the above collection.
-     * @returns {string}
-     * FirestoreOperationResult json object stringified.
-     * This result object is obtained with call to _getResultObject
-     */
-    addDocument: async function (collection, documentStr) {
+    if (db == null) {
+        db = firebase.firestore();
+    }
 
-        if (this.db == null) {
-            this.db = firebase.firestore();
-        }
+    try {
 
-        try {
+        let doc = new FirestoreDocument({ interopObject: JSON.parse(documentStr) });
+        let docRef = await db.collection(collection).add(doc.userDocument);
+        doc.docRef = new FirestoreDocRef(docRef);
+        return JSON.stringify(new FirestoreOperationResult(true, { document: doc }));
 
-            let doc = new FirestoreDocument({ interopObject: JSON.parse(documentStr) });
-            let docRef = await this.db.collection(collection).add(doc.userDocument);
-            doc.docRef = new FirestoreDocRef(docRef);
-            return JSON.stringify(new FirestoreOperationResult(true, { document: doc }));
+    } catch (error) {
 
-        } catch (error) {
+        return JSON.stringify(new FirestoreOperationResult(false, { error: error }));
+    }
+}
 
-            return JSON.stringify(new FirestoreOperationResult(false, { error: error }));
-        }
-    },
+export async function getDocument(collection, docId) {
 
-    getDocument: async function (collection, docId) {
+    if (db == null) {
+        db = firebase.firestore();
+    }
 
-        if (this.db == null) {
-            this.db = firebase.firestore();
-        }
+    try {
 
-        try {
+        let docRef = await db.collection(collection).doc(docId);
+        let doc = await docRef.get();
+        if (doc.exists) {
 
-            let docRef = await this.db.collection(collection).doc(docId);
-            let doc = await docRef.get();
-            if (doc.exists) {
-
-                let userDocument = doc.data();
-                return JSON.stringify(
-                    new FirestoreOperationResult(
-                        true,
-                        {
-                            document:
-                                new FirestoreDocument({
-                                    docRef: new FirestoreDocRef(docRef),
-                                    userDocument: userDocument
-                                })
-                        }));
-
-            } else {
-                return JSON.stringify(
-                    new FirestoreOperationResult(
-                        false, { error: { name: 'Document does not exist.' } }));
-            }
-
-        } catch (error) {
-
+            let userDocument = doc.data();
             return JSON.stringify(
-                new FirestoreOperationResult(false, { error: error }));
+                new FirestoreOperationResult(
+                    true,
+                    {
+                        document:
+                            new FirestoreDocument({
+                                docRef: new FirestoreDocRef(docRef),
+                                userDocument: userDocument
+                            })
+                    }));
+
+        } else {
+            return JSON.stringify(
+                new FirestoreOperationResult(
+                    false, { error: { name: 'Document does not exist.' } }));
         }
-    },
 
-    getAllDocuments: async function (collection) {
+    } catch (error) {
 
-        if (this.db == null) {
-            this.db = firebase.firestore();
-        }
+        return JSON.stringify(
+            new FirestoreOperationResult(false, { error: error }));
+    }
+}
 
-        try {
+export async function getAllDocuments(collection) {
 
-            let snapshot = await this.db.collection(collection).get();
-            let docList = [];
-            snapshot.forEach(doc => {
-                docList.push(new FirestoreDocument({
-                    docRef: new FirestoreDocRef(doc.ref),
-                    userDocument: doc.data()
-                }));
+    if (db == null) {
+        db = firebase.firestore();
+    }
+
+    try {
+
+        let snapshot = await db.collection(collection).get();
+        let docList = [];
+        snapshot.forEach(doc => {
+            docList.push(new FirestoreDocument({
+                docRef: new FirestoreDocRef(doc.ref),
+                userDocument: doc.data()
+            }));
+        });
+
+        return JSON.stringify(
+            new FirestoreOperationResult(true, { documentList: docList }));
+
+    } catch (error) {
+
+        return JSON.stringify(
+            new FirestoreOperationResult(false, { error: error }));
+    }
+}
+
+export async function setDocument(collection, docId, documentStr) {
+
+    if (db == null) {
+        db = firebase.firestore();
+    }
+
+    try {
+
+        let doc = new FirestoreDocument({ interopObject: JSON.parse(documentStr) });
+        let docRef = await db.collection(collection).doc(docId);
+
+        await docRef.set(doc.userDocument);
+
+        return JSON.stringify(new FirestoreOperationResult(true, { document: doc }));
+
+    } catch (error) {
+
+        return JSON.stringify(new FirestoreOperationResult(false, { error: error }));
+    }
+}
+
+export async function updateDocument(collection, docId, documentStr) {
+
+    if (db == null) {
+        db = firebase.firestore();
+    }
+
+    try {
+
+        let doc = new FirestoreDocument({ interopObject: JSON.parse(documentStr) });
+        let docRef = await db.collection(collection).doc(docId);
+
+        await docRef.update(doc.userDocument);
+
+        return JSON.stringify(new FirestoreOperationResult(true));
+
+    } catch (error) {
+
+        return JSON.stringify(new FirestoreOperationResult(false, { error: error }));
+    }
+}
+
+export async function onSnapshot(collection, docId, assemblyName, authStateChangeCbName) {
+
+    if (db == null) {
+        db = firebase.firestore();
+    }
+
+    try {
+
+        db.collection(collection).doc(docId).onSnapshot(doc => {
+
+            let document = new FirestoreDocument({
+                docRef: new FirestoreDocRef(doc.ref),
+                userDocument: doc.data()
             });
 
-            return JSON.stringify(
-                new FirestoreOperationResult(true, { documentList: docList }));
+            DotNet.invokeMethodAsync(assemblyName, authStateChangeCbName,
+                docId, JSON.stringify(document.getInteropObject()));
+        });
 
-        } catch (error) {
+        return JSON.stringify(new FirestoreOperationResult(true));
 
-            return JSON.stringify(
-                new FirestoreOperationResult(false, { error: error }));
-        }
-    },
+    } catch (error) {
 
-    setDocument: async function (collection, docId, documentStr) {
-
-        if (this.db == null) {
-            this.db = firebase.firestore();
-        }
-
-        try {
-
-            let doc = new FirestoreDocument({ interopObject: JSON.parse(documentStr) });
-            let docRef = await this.db.collection(collection).doc(docId);
-
-            await docRef.set(doc.userDocument);
-
-            return JSON.stringify(new FirestoreOperationResult(true, { document: doc }));
-
-        } catch (error) {
-
-            return JSON.stringify(new FirestoreOperationResult(false, { error: error }));
-        }
-    },
-
-    updateDocument: async function (collection, docId, documentStr) {
-
-        if (this.db == null) {
-            this.db = firebase.firestore();
-        }
-
-        try {
-
-            let doc = new FirestoreDocument({ interopObject: JSON.parse(documentStr) });
-            let docRef = await this.db.collection(collection).doc(docId);
-
-            await docRef.update(doc.userDocument);
-
-            return JSON.stringify(new FirestoreOperationResult(true));
-
-        } catch (error) {
-
-            return JSON.stringify(new FirestoreOperationResult(false, { error: error }));
-        }
-    },
-
-    onSnapshot: async function (collection, docId, assemblyName, authStateChangeCbName) {
-
-        if (this.db == null) {
-            this.db = firebase.firestore();
-        }
-
-        try {
-
-            this.db.collection(collection).doc(docId).onSnapshot(doc => {
-
-                let document = new FirestoreDocument({
-                    docRef: new FirestoreDocRef(doc.ref),
-                    userDocument: doc.data()
-                });
-
-                DotNet.invokeMethodAsync(assemblyName, authStateChangeCbName,
-                    docId, JSON.stringify(document.getInteropObject()));
-            });
-
-            return JSON.stringify(new FirestoreOperationResult(true));
-
-        } catch (error) {
-
-            return JSON.stringify(new FirestoreOperationResult(false, { error: error }));
-        }
-    },
-};
+        return JSON.stringify(new FirestoreOperationResult(false, { error: error }));
+    }
+}

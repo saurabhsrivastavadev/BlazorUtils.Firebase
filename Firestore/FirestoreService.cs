@@ -13,7 +13,9 @@ namespace BlazorUtils.Firebase
 {
     public class FirestoreService : IFirestoreService
     {
-        private IJSRuntime JSR { get; set; }
+        private readonly Lazy<Task<IJSObjectReference>> initModuleTask;
+        private readonly Lazy<Task<IJSObjectReference>> firestoreModuleTask;
+
         private ILogger<FirestoreService> Logger { get; set; }
 
         // Hold instance for callback invocation from javascript
@@ -28,8 +30,14 @@ namespace BlazorUtils.Firebase
 
             Instance = new WeakReference<FirestoreService>(this);
 
-            JSR = jsr;
             Logger = logger;
+
+            initModuleTask = new(() => jsr.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorUtils.Firebase/init.js").AsTask());
+            firestoreModuleTask = new(() => jsr.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorUtils.Firebase/firestore.js").AsTask());
+
+            Core.Firebase.InitFirebaseSdk(initModuleTask);
         }
 
         public async Task<FirestoreOperationResult<T>>
@@ -49,11 +57,11 @@ namespace BlazorUtils.Firebase
                 return new FirestoreOperationResult<T> { Success = false };
             }
 
+            var module = await firestoreModuleTask.Value;
             try
             {
                 operationResult =
-                    await JSR.InvokeAsync<string>(
-                        "window.blazor_utils.firebase.firestore.addDocument",
+                    await module.InvokeAsync<string>("addDocument",
                         collection, JsonSerializer.Serialize<T>(document));
             }
             catch (Exception e)
@@ -82,12 +90,11 @@ namespace BlazorUtils.Firebase
                 return new FirestoreOperationResult<T> { Success = false };
             }
 
+            var module = await firestoreModuleTask.Value;
             try
             {
                 operationResult =
-                    await JSR.InvokeAsync<string>(
-                        "window.blazor_utils.firebase.firestore.getDocument",
-                        collection, docId);
+                    await module.InvokeAsync<string>("getDocument", collection, docId);
             }
             catch (Exception e)
             {
@@ -110,12 +117,11 @@ namespace BlazorUtils.Firebase
                 return new FirestoreOperationResult<T> { Success = false };
             }
 
+            var module = await firestoreModuleTask.Value;
             try
             {
                 operationResult =
-                    await JSR.InvokeAsync<string>(
-                        "window.blazor_utils.firebase.firestore.getAllDocuments",
-                        collection);
+                    await module.InvokeAsync<string>("getAllDocuments", collection);
             }
             catch (Exception e)
             {
@@ -160,11 +166,11 @@ namespace BlazorUtils.Firebase
                 };
             }
 
+            var module = await firestoreModuleTask.Value;
             try
             {
                 operationResult =
-                    await JSR.InvokeAsync<string>(
-                        "window.blazor_utils.firebase.firestore.setDocument",
+                    await module.InvokeAsync<string>("setDocument",
                         collection, docId, JsonSerializer.Serialize<T>(document));
             }
             catch (Exception e)
@@ -211,11 +217,11 @@ namespace BlazorUtils.Firebase
                 };
             }
 
+            var module = await firestoreModuleTask.Value;
             try
             {
                 operationResult =
-                    await JSR.InvokeAsync<string>(
-                        "window.blazor_utils.firebase.firestore.updateDocument",
+                    await module.InvokeAsync<string>("updateDocument",
                         collection, docId, JsonSerializer.Serialize<C>(document));
             }
             catch (Exception e)
@@ -248,11 +254,11 @@ namespace BlazorUtils.Firebase
             _docIdVsDocType.Add(docId, typeof(T));
             _docIdVsSnapshotCallback.Add(docId, callback);
 
+            var module = await firestoreModuleTask.Value;
             try
             {
                 operationResult =
-                    await JSR.InvokeAsync<string>(
-                        "window.blazor_utils.firebase.firestore.onSnapshot",
+                    await module.InvokeAsync<string>("onSnapshot",
                         collection, docId, "BlazorUtils.Firebase", "OnSnapshotJsCallback");
             }
             catch (Exception e)
