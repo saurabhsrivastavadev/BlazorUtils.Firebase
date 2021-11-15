@@ -1,6 +1,8 @@
 // firestore.js
 // Wrappers on top of firestore javascript sdk
 
+import { getFirestore } from 'https://www.gstatic.com/firebasejs/9.3.0/firebase-firestore.js';
+
 /**
  * Class representing a firestore document reference data
  * */
@@ -143,8 +145,6 @@ let db = null;
  * This result object is obtained with call to _getResultObject
  */
 export async function addDocument(collection, documentStr) {
-
-    import { getFirestore } from 'https://www.gstatic.com/firebasejs/9.3.0/firebase-firestore.js';
 
     if (db == null) {
         db = getFirestore();

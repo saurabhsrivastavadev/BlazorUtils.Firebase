@@ -1,6 +1,8 @@
 ﻿// init.js
 // This script deals with initializing the firebase sdk
 
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.3.0/firebase-app.js';
+
 let firebaseApp = null;
 let firebaseSdkInitParams = null;
 
@@ -51,13 +53,11 @@ class FirebaseSdkInitParams {
  * 
  * @param {FirebaseSdkInitParams} params 
  */
-export async function loadFirebaseSdk(params) {
+async function loadFirebaseSdk(params) {
 
     firebaseSdkInitParams = params;
 
     // Firebase setup:: https://firebase.google.com/docs/web/setup
-
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.3.0/firebase-app.js';
 
     if (!params.firebaseConfig) {
 

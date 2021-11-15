@@ -22,6 +22,8 @@ namespace BlazorUtils.Firebase
         // Hold instance for callback invocation from javascript
         private static WeakReference<FirebaseGoogleAuthService> Instance { get; set; }
 
+        private IJSRuntime JSR { get; set; }
+
         public FirebaseGoogleAuthService(IJSRuntime jsr, ILogger<FirebaseGoogleAuthService> logger)
         {
             if (Instance != null)
@@ -32,10 +34,11 @@ namespace BlazorUtils.Firebase
             Instance = new WeakReference<FirebaseGoogleAuthService>(this);
 
             Logger = logger;
+            JSR = jsr;
 
-            initModuleTask = new(() => jsr.InvokeAsync<IJSObjectReference>(
+            initModuleTask = new (() => jsr.InvokeAsync<IJSObjectReference>(
                "import", "./_content/BlazorUtils.Firebase/init.js").AsTask());
-            authModuleTask = new(() => jsr.InvokeAsync<IJSObjectReference>(
+            authModuleTask = new (() => jsr.InvokeAsync<IJSObjectReference>(
                "import", "./_content/BlazorUtils.Firebase/auth.js").AsTask());
 
             Core.Firebase.InitFirebaseSdk(initModuleTask);

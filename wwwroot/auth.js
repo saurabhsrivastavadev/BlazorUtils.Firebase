@@ -1,6 +1,10 @@
 // auth.js
 // Wrappers on top of firebase authentication javascript sdk
 
+import {
+    GoogleAuthProvider, getAuth, setPersistence, browserSessionPersistence, signInWithPopup
+} from 'https://www.gstatic.com/firebasejs/9.3.0/firebase-auth.js';
+
 let provider = null;
 let isRegisteredForAuthStateChange = false;
 let signedInUser = null;
@@ -14,7 +18,7 @@ console.log('auth.js loaded !');
  * The list of Google API scopes that will be requested during sign in
  * @returns {string} Stringified auth result object
  */
-export async function signInWithPopup(signInScopeList) {
+export async function firebaseSignInWithPopup(signInScopeList) {
 
     return await signIn(signInScopeList, "popup");
 }
@@ -26,7 +30,7 @@ export async function signInWithPopup(signInScopeList) {
  * The list of Google API scopes that will be requested during sign in
  * @returns {string} Stringified auth result object
  */
-export async function signInWithRedirect(signInScopeList) {
+export async function firebaseSignInWithRedirect(signInScopeList) {
 
     return await signIn(signInScopeList, "redirect");
 }
@@ -39,11 +43,7 @@ export async function signInWithRedirect(signInScopeList) {
  * The login type must be passed in as "popup" or "redirect"
  * @returns {string} Stringified auth result object
  */
-export async function signIn(signInScopeList, loginType) {
-
-    import {
-        GoogleAuthProvider, getAuth, setPersistence, browserSessionPersistence, signInWithPopup
-    } from 'https://www.gstatic.com/firebasejs/9.3.0/firebase-auth.js';
+export async function firebaseSignIn(signInScopeList, loginType) {
 
     if (provider == null) {
         provider = new GoogleAuthProvider();
@@ -87,7 +87,7 @@ export async function signIn(signInScopeList, loginType) {
  * No effect if user is not signed in.
  * @returns {string} Stringified auth result object.
  * */
-export async function signOut() {
+export async function firebaseSignOut() {
 
     let resultObj;
     try {
@@ -109,7 +109,7 @@ export async function signOut() {
 /**
  * Configure Firebase libary to use emulators for local validation
  * */
-export async function useAuthEmulator(port = 9099) {
+export async function firebaseUseAuthEmulator(port = 9099) {
 
     firebase.auth().useEmulator(`http://localhost:${port}`);
 }
@@ -119,7 +119,7 @@ export async function useAuthEmulator(port = 9099) {
  * @param {string} assemblyName The .Net assembly containing the callback to be invoked
  * @param {string} authStateChangeCbName The .Net callback to be invoked on auth state change
  */
-export async function registerForAuthStateChange(assemblyName, authStateChangeCbName) {
+export async function firebaseRegisterForAuthStateChange(assemblyName, authStateChangeCbName) {
 
     if (isRegisteredForAuthStateChange) {
         return true;
@@ -146,7 +146,7 @@ export async function registerForAuthStateChange(assemblyName, authStateChangeCb
  * @param {string} persistence Can have value SESSION, LOCAL or NONE
  * @returns {boolean} true if operation successful, false otherwise.
  */
-export async function setPersistence(persistence) {
+export async function firebaseSetPersistence(persistence) {
 
     let fbPersistence = firebase.auth.Auth.Persistence.NONE;
 
@@ -176,7 +176,7 @@ export async function setPersistence(persistence) {
  * Get the currently signed in user.
  * @returns {string} The user object stringified.
  * */
-export function getCurrentUser() {
+export function firebaseGetCurrentUser() {
 
     if (signedInUser) {
         return JSON.stringify(signedInUser);
@@ -188,7 +188,7 @@ export function getCurrentUser() {
  * Is the user signed in ?
  * @returns {boolean} true if user is signed in, false otherwise
  * */
-export function isSignedIn() {
+export function firebaseIsSignedIn() {
 
     if (signedInUser) {
         return true;
