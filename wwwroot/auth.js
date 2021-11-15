@@ -9,8 +9,6 @@ let provider = null;
 let isRegisteredForAuthStateChange = false;
 let signedInUser = null;
 
-console.log('auth.js loaded !');
-
 /** 
  * Sign in using Google auth with a popup window.
  * The current tab will not be redirected for login.

@@ -1,4 +1,4 @@
-﻿// init.js
+﻿// init.js Module
 // This script deals with initializing the firebase sdk
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.3.0/firebase-app.js';
@@ -39,11 +39,12 @@ class FirebaseSdkInitParams {
             params = JSON.parse(params);
         }
 
-        this.firebaseConfig = params.firebaseConfig;
-        this.useAuthModule = params.useAuthModule;
-        this.emulateAuthModule = params.emulateAuthModule;
-        this.useFirestoreModule = params.useFirestoreModule;
-        this.emulateFirestoreModule = params.emulateFirestoreModule;
+        this.firebaseProjectId = params.FirebaseProjectId;
+        this.firebaseConfig = params.FirebaseConfig;
+        this.useAuthModule = params.UseAuthModule;
+        this.emulateAuthModule = params.EmulateAuthModule;
+        this.useFirestoreModule = params.UseFirestoreModule;
+        this.emulateFirestoreModule = params.EmulateFirestoreModule;
     }
 }
 
@@ -53,20 +54,23 @@ class FirebaseSdkInitParams {
  * 
  * @param {FirebaseSdkInitParams} params 
  */
-async function loadFirebaseSdk(params) {
+async function loadFirebaseSdk(paramsJsonStr) {
 
-    firebaseSdkInitParams = params;
+    firebaseSdkInitParams = new FirebaseSdkInitParams(paramsJsonStr);
 
     // Firebase setup:: https://firebase.google.com/docs/web/setup
 
-    if (!params.firebaseConfig) {
+    if (!firebaseSdkInitParams.firebaseConfig) {
 
         console.log('No firebase config provided, try fetching from server.');
         const configJson = await (await fetch('/__/firebase/init.json')).json();
-        firebaseSdkInitParams.firebaseConfig = JSON.parse(configJson);
+        firebaseSdkInitParams.firebaseConfig = new FirebaseConfig(configJson);
     }
 
     firebaseApp = initializeApp(firebaseSdkInitParams.firebaseConfig);
+    if (firebaseApp) {
+        console.log('firebase app initialized sucessfully.');
+    }
 }
 
 export { FirebaseConfig, FirebaseSdkInitParams, firebaseApp, firebaseSdkInitParams, loadFirebaseSdk };

@@ -32,6 +32,7 @@ namespace BlazorUtils.Firebase.Core
     // Need to make sure same argument names are used in the JS code.
     internal class FirebaseSdkInitParams
     {
+        public string FirebaseProjectId { get; set; }
         public FirebaseConfig FirebaseConfig { get; set; }
         public bool UseAuthModule { get; set; }
         public bool EmulateAuthModule { get; set; }
@@ -42,13 +43,15 @@ namespace BlazorUtils.Firebase.Core
     public static class Firebase
     {
         public static List<FirebaseModule> EnabledModules { get; private set; }
+        public static string FirebaseProjectId { get; set; }
         public static FirebaseConfig FirebaseConfig { get; private set; }
 
         public static void EnableModules(
             IServiceCollection webAssemblyHostBuilderServices, 
-            FirebaseConfig config, List<FirebaseModule> moduleList)
+            string firebaseProjectId, FirebaseConfig config, List<FirebaseModule> moduleList)
         {
             EnabledModules = moduleList;
+            FirebaseProjectId = firebaseProjectId;
             FirebaseConfig = config;
 
             if (moduleList != null && moduleList.Contains(FirebaseModule.AUTHENTICATION))
@@ -78,6 +81,7 @@ namespace BlazorUtils.Firebase.Core
                 {
                     var initParams = new FirebaseSdkInitParams
                     {
+                        FirebaseProjectId = FirebaseProjectId,
                         FirebaseConfig = FirebaseConfig,
                         UseAuthModule = EnabledModules.Contains(FirebaseModule.AUTHENTICATION),
                         UseFirestoreModule = EnabledModules.Contains(FirebaseModule.FIRESTORE),
