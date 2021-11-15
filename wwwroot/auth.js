@@ -5,6 +5,8 @@ let provider = null;
 let isRegisteredForAuthStateChange = false;
 let signedInUser = null;
 
+console.log('auth.js loaded !');
+
 /** 
  * Sign in using Google auth with a popup window.
  * The current tab will not be redirected for login.
@@ -39,8 +41,12 @@ export async function signInWithRedirect(signInScopeList) {
  */
 export async function signIn(signInScopeList, loginType) {
 
+    import {
+        GoogleAuthProvider, getAuth, setPersistence, browserSessionPersistence, signInWithPopup
+    } from 'https://www.gstatic.com/firebasejs/9.3.0/firebase-auth.js';
+
     if (provider == null) {
-        provider = new firebase.auth.GoogleAuthProvider();
+        provider = new GoogleAuthProvider();
     }
 
     if (signInScopeList) {
@@ -51,15 +57,16 @@ export async function signIn(signInScopeList, loginType) {
 
     // by default resort to local persistence
     // keep the user signed in
-    await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    const auth = getAuth();
+    await setPersistence(auth, browserSessionPersistence);
 
     let resultObj;
     try {
 
         if (loginType === "popup") {
-            resultObj = await firebase.auth().signInWithPopup(provider);
+            resultObj = await signInWithPopup(auth, provider);
         } else if (loginType === "redirect") {
-            resultObj = await firebase.auth().signInWithRedirect(provider);
+            resultObj = await signInWithRedirect(auth, provider);
         } else {
             throw { message: `Invalid login type: ${loginType}` };
         }
@@ -100,6 +107,14 @@ export async function signOut() {
 }
 
 /**
+ * Configure Firebase libary to use emulators for local validation
+ * */
+export async function useAuthEmulator(port = 9099) {
+
+    firebase.auth().useEmulator(`http://localhost:${port}`);
+}
+
+/**
  * Register callback to be notified of sign in and sign out events.
  * @param {string} assemblyName The .Net assembly containing the callback to be invoked
  * @param {string} authStateChangeCbName The .Net callback to be invoked on auth state change
@@ -109,6 +124,7 @@ export async function registerForAuthStateChange(assemblyName, authStateChangeCb
     if (isRegisteredForAuthStateChange) {
         return true;
     }
+
     firebase.auth().onAuthStateChanged(user => {
 
         signedInUser = user;

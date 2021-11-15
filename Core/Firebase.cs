@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace BlazorUtils.Firebase.Core
@@ -12,17 +13,43 @@ namespace BlazorUtils.Firebase.Core
     public enum FirebaseModule
     {
         AUTHENTICATION,
-        FIRESTORE
+        AUTHENTICATION_EMULATOR,
+        FIRESTORE,
+        FIRESTORE_EMULATOR
+    }
+
+    public class FirebaseConfig
+    {
+        public string ApiKey { get; set; }
+        public string AuthDomain { get; set; }
+        public string DatabaseURL { get; set; }
+        public string MessagingSenderId { get; set; }
+        public string ProjectId { get; set; }
+        public string StorageBucket { get; set; }
+    }
+
+    // This class encapsulates init params sent to JS native code.
+    // Need to make sure same argument names are used in the JS code.
+    internal class FirebaseSdkInitParams
+    {
+        public FirebaseConfig FirebaseConfig { get; set; }
+        public bool UseAuthModule { get; set; }
+        public bool EmulateAuthModule { get; set; }
+        public bool UseFirestoreModule { get; set; }
+        public bool EmulateFirestoreModule { get; set; }
     }
 
     public static class Firebase
     {
         public static List<FirebaseModule> EnabledModules { get; private set; }
+        public static FirebaseConfig FirebaseConfig { get; private set; }
 
         public static void EnableModules(
-            IServiceCollection webAssemblyHostBuilderServices, List<FirebaseModule> moduleList)
+            IServiceCollection webAssemblyHostBuilderServices, 
+            FirebaseConfig config, List<FirebaseModule> moduleList)
         {
             EnabledModules = moduleList;
+            FirebaseConfig = config;
 
             if (moduleList != null && moduleList.Contains(FirebaseModule.AUTHENTICATION))
             {
@@ -41,7 +68,7 @@ namespace BlazorUtils.Firebase.Core
             }
         }
 
-        public static async void InitFirebaseSdk(Lazy<Task<IJSObjectReference>> initModuleTask)
+        internal static async void InitFirebaseSdk(Lazy<Task<IJSObjectReference>> initModuleTask)
         {
             var initModule = await initModuleTask.Value;
             int retries = 0;
@@ -49,9 +76,18 @@ namespace BlazorUtils.Firebase.Core
             {
                 try
                 {
-                    await initModule.InvokeVoidAsync("loadFirebaseSdk",
-                        Core.Firebase.EnabledModules.Contains(FirebaseModule.AUTHENTICATION),
-                        Core.Firebase.EnabledModules.Contains(FirebaseModule.FIRESTORE));
+                    var initParams = new FirebaseSdkInitParams
+                    {
+                        FirebaseConfig = FirebaseConfig,
+                        UseAuthModule = EnabledModules.Contains(FirebaseModule.AUTHENTICATION),
+                        UseFirestoreModule = EnabledModules.Contains(FirebaseModule.FIRESTORE),
+                        EmulateAuthModule = EnabledModules.Contains(FirebaseModule.AUTHENTICATION_EMULATOR),
+                        EmulateFirestoreModule = EnabledModules.Contains(FirebaseModule.FIRESTORE_EMULATOR)
+                    };
+
+                    await initModule.InvokeVoidAsync(
+                        "loadFirebaseSdk", JsonSerializer.Serialize(initParams));
+
                     return;
                 }
                 catch (Exception e)

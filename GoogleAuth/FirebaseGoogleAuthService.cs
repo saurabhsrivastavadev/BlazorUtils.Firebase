@@ -65,7 +65,7 @@ namespace BlazorUtils.Firebase
                     await Task.Delay(200);
                 }
             }
-            Logger.LogError("Failed to register for auth change event");
+            Logger.LogError("Failed to register for auth change event !");
         }
 
         [JSInvokable]

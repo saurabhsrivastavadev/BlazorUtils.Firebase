@@ -1,57 +1,72 @@
 ﻿// init.js
-// This script deals with dynamically loading the firebase sdk scripts
+// This script deals with initializing the firebase sdk
 
-let isFirebaseSdkLoaded = false;
+let firebaseApp = null;
+let firebaseSdkInitParams = null;
+
+/**
+ * Class representing firebase config 
+ * */
+class FirebaseConfig {
+
+    /**
+     * Constructor
+     * @param {any} firebase config json
+     */
+    constructor(config) {
+
+        // config can be object or json
+        if (typeof (config) === 'string') {
+            config = JSON.parse(config);
+        }
+
+        this.apiKey = config.apiKey;
+        this.authDomain = config.authDomain;
+        this.databaseURL = config.databaseURL;
+        this.messagingSenderId = config.messagingSenderId;
+        this.projectId = config.projectId;
+        this.storageBucket = config.storageBucket;
+    }
+}
+
+class FirebaseSdkInitParams {
+
+    constructor(params) {
+
+        if (typeof (params) === 'string') {
+            params = JSON.parse(params);
+        }
+
+        this.firebaseConfig = params.firebaseConfig;
+        this.useAuthModule = params.useAuthModule;
+        this.emulateAuthModule = params.emulateAuthModule;
+        this.useFirestoreModule = params.useFirestoreModule;
+        this.emulateFirestoreModule = params.emulateFirestoreModule;
+    }
+}
 
 /**
  * Load the required firebase SDK scripts.
  * This API must be executed before invoking any firebase module APIs.
- * @param {boolean} loadFirebaseAuth
- * Whether to load firebase-auth module script.
- * @param {boolean} loadFirestore
- * Whether to load firebase-firestore module script.
+ * 
+ * @param {FirebaseSdkInitParams} params 
  */
-export async function loadFirebaseSdk(loadFirebaseAuth, loadFirestore) {
+export async function loadFirebaseSdk(params) {
 
-    if (!isFirebaseSdkLoaded) {
+    firebaseSdkInitParams = params;
 
-        isFirebaseSdkLoaded = true;
+    // Firebase setup:: https://firebase.google.com/docs/web/setup
 
-        // Get first script element in the document to insert our scripts before that.
-        let firstScriptTag = document.getElementsByTagName('script')[0];
-        let parent = firstScriptTag.parentNode;
-        let insertBefore = firstScriptTag;
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.3.0/firebase-app.js';
 
-        // Firebase setup:: https://firebase.google.com/docs/web/setup
-        // Order must be app script, followed by all required firebase modules, then init 
+    if (!params.firebaseConfig) {
 
-        // Firebase App(the core Firebase SDK) is always required and must be listed first
-        let firebaseAppScript = document.createElement('script');
-        firebaseAppScript.src = "/__/firebase/8.6.8/firebase-app.js";
-        firebaseAppScript.async = false; // load synchronously since order is important
-        parent.insertBefore(firebaseAppScript, insertBefore);
-        insertBefore = firebaseAppScript.nextSibling;
-
-        if (loadFirebaseAuth) {
-            let firebaseAuthScript = document.createElement('script');
-            firebaseAuthScript.src = "/__/firebase/8.6.8/firebase-auth.js";
-            firebaseAuthScript.async = false; // load synchronously since order is important
-            parent.insertBefore(firebaseAuthScript, insertBefore);
-            insertBefore = firebaseAuthScript.nextSibling;
-        }
-
-        if (loadFirestore) {
-            let firebaseFirestoreScript = document.createElement('script');
-            firebaseFirestoreScript.src = "/__/firebase/8.6.8/firebase-firestore.js";
-            firebaseFirestoreScript.async = false; // load synchronously since order is important
-            parent.insertBefore(firebaseFirestoreScript, insertBefore);
-            insertBefore = firebaseFirestoreScript.nextSibling;
-        }
-
-        // Firebase Init is always required, and must be the last firebase script
-        let firebaseInitScript = document.createElement('script');
-        firebaseInitScript.src = "/__/firebase/init.js";
-        firebaseInitScript.async = false;
-        parent.insertBefore(firebaseInitScript, insertBefore);
+        console.log('No firebase config provided, try fetching from server.');
+        const configJson = await (await fetch('/__/firebase/init.json')).json();
+        firebaseSdkInitParams.firebaseConfig = JSON.parse(configJson);
     }
+
+    firebaseApp = initializeApp(firebaseSdkInitParams.firebaseConfig);
 }
+
+export { FirebaseConfig, FirebaseSdkInitParams, firebaseApp, firebaseSdkInitParams, loadFirebaseSdk };
