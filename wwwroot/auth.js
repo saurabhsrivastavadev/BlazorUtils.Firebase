@@ -2,7 +2,8 @@
 // Wrappers on top of firebase authentication javascript sdk
 
 import {
-    GoogleAuthProvider, getAuth, setPersistence, browserSessionPersistence, signInWithPopup
+    GoogleAuthProvider, getAuth, setPersistence, browserSessionPersistence, signInWithPopup,
+    signInWithRedirect, signOut
 } from 'https://www.gstatic.com/firebasejs/9.3.0/firebase-auth.js';
 
 let provider = null;
@@ -16,9 +17,9 @@ let signedInUser = null;
  * The list of Google API scopes that will be requested during sign in
  * @returns {string} Stringified auth result object
  */
-export async function firebaseSignInWithPopup(signInScopeList) {
+async function firebaseSignInWithPopup(signInScopeList) {
 
-    return await signIn(signInScopeList, "popup");
+    return await firebaseSignIn(signInScopeList, "popup");
 }
 
 /**
@@ -28,9 +29,9 @@ export async function firebaseSignInWithPopup(signInScopeList) {
  * The list of Google API scopes that will be requested during sign in
  * @returns {string} Stringified auth result object
  */
-export async function firebaseSignInWithRedirect(signInScopeList) {
+async function firebaseSignInWithRedirect(signInScopeList) {
 
-    return await signIn(signInScopeList, "redirect");
+    return await firebaseSignIn(signInScopeList, "redirect");
 }
 
 /**
@@ -41,7 +42,7 @@ export async function firebaseSignInWithRedirect(signInScopeList) {
  * The login type must be passed in as "popup" or "redirect"
  * @returns {string} Stringified auth result object
  */
-export async function firebaseSignIn(signInScopeList, loginType) {
+async function firebaseSignIn(signInScopeList, loginType) {
 
     if (provider == null) {
         provider = new GoogleAuthProvider();
@@ -85,12 +86,13 @@ export async function firebaseSignIn(signInScopeList, loginType) {
  * No effect if user is not signed in.
  * @returns {string} Stringified auth result object.
  * */
-export async function firebaseSignOut() {
+async function firebaseSignOut() {
 
     let resultObj;
     try {
 
-        await firebase.auth().signOut();
+        const auth = getAuth();
+        await signOut(auth);
         resultObj = {
             success: true,
         }
@@ -107,9 +109,10 @@ export async function firebaseSignOut() {
 /**
  * Configure Firebase libary to use emulators for local validation
  * */
-export async function firebaseUseAuthEmulator(port = 9099) {
+async function firebaseUseAuthEmulator(port = 9099) {
 
-    firebase.auth().useEmulator(`http://localhost:${port}`);
+    const auth = getAuth();
+    auth.useEmulator(`http://localhost:${port}`);
 }
 
 /**
@@ -117,13 +120,14 @@ export async function firebaseUseAuthEmulator(port = 9099) {
  * @param {string} assemblyName The .Net assembly containing the callback to be invoked
  * @param {string} authStateChangeCbName The .Net callback to be invoked on auth state change
  */
-export async function firebaseRegisterForAuthStateChange(assemblyName, authStateChangeCbName) {
+async function firebaseRegisterForAuthStateChange(assemblyName, authStateChangeCbName) {
 
     if (isRegisteredForAuthStateChange) {
         return true;
     }
 
-    firebase.auth().onAuthStateChanged(user => {
+    const auth = getAuth();
+    auth.onAuthStateChanged(user => {
 
         signedInUser = user;
 
@@ -135,6 +139,7 @@ export async function firebaseRegisterForAuthStateChange(assemblyName, authState
         }
         DotNet.invokeMethodAsync(assemblyName, authStateChangeCbName, userJson);
     });
+
     isRegisteredForAuthStateChange = true;
     return true;
 }
@@ -144,16 +149,18 @@ export async function firebaseRegisterForAuthStateChange(assemblyName, authState
  * @param {string} persistence Can have value SESSION, LOCAL or NONE
  * @returns {boolean} true if operation successful, false otherwise.
  */
-export async function firebaseSetPersistence(persistence) {
+async function firebaseSetPersistence(persistence) {
 
-    let fbPersistence = firebase.auth.Auth.Persistence.NONE;
+    const auth = getAuth();
+
+    let fbPersistence = auth.Auth.Persistence.NONE;
 
     if (persistence.toUpperCase() === 'SESSION') {
-        fbPersistence = firebase.auth.Auth.Persistence.SESSION;
+        fbPersistence = auth.Auth.Persistence.SESSION;
     } else if (persistence.toUpperCase() === 'LOCAL') {
-        fbPersistence = firebase.auth.Auth.Persistence.LOCAL;
+        fbPersistence = auth.Auth.Persistence.LOCAL;
     } else if (persistence.toUpperCase() === 'NONE') {
-        fbPersistence = firebase.auth.Auth.Persistence.NONE;
+        fbPersistence = auth.Auth.Persistence.NONE;
     } else {
         console.log('invalid persistence value: ' + persistence);
         return false;
@@ -161,7 +168,7 @@ export async function firebaseSetPersistence(persistence) {
 
     try {
 
-        await firebase.auth().setPersistence(fbPersistence);
+        await auth.setPersistence(fbPersistence);
         return true;
 
     } catch (error) {
@@ -174,7 +181,7 @@ export async function firebaseSetPersistence(persistence) {
  * Get the currently signed in user.
  * @returns {string} The user object stringified.
  * */
-export function firebaseGetCurrentUser() {
+function firebaseGetCurrentUser() {
 
     if (signedInUser) {
         return JSON.stringify(signedInUser);
@@ -186,7 +193,7 @@ export function firebaseGetCurrentUser() {
  * Is the user signed in ?
  * @returns {boolean} true if user is signed in, false otherwise
  * */
-export function firebaseIsSignedIn() {
+function firebaseIsSignedIn() {
 
     if (signedInUser) {
         return true;
@@ -212,3 +219,9 @@ function getErrorObject(error) {
         }
     };
 }
+
+export {
+    firebaseSignInWithPopup, firebaseSignInWithRedirect, firebaseSignOut, firebaseUseAuthEmulator,
+    firebaseRegisterForAuthStateChange, firebaseSetPersistence, firebaseGetCurrentUser,
+    firebaseIsSignedIn
+};

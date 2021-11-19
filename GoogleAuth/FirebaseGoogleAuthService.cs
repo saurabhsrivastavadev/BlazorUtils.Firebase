@@ -58,7 +58,7 @@ namespace BlazorUtils.Firebase
             {
                 try
                 {
-                    await module.InvokeAsync<bool>("registerForAuthStateChange",
+                    await module.InvokeAsync<bool>("firebaseRegisterForAuthStateChange",
                         "BlazorUtils.Firebase", "OnAuthStateChangedJsCallback");
                     return;
                 }
@@ -102,7 +102,7 @@ namespace BlazorUtils.Firebase
             bool wasUserSignedIn = await IsSignedIn();
 
             string jsMethod = signInWithPopup ? 
-                "signInWithPopup": "signInWithRedirect";
+                "firebaseSignInWithPopup": "firebaseSignInWithRedirect";
             try
             {
                 signInResult = await module.InvokeAsync<string>(jsMethod, signInScopes);
@@ -131,7 +131,7 @@ namespace BlazorUtils.Firebase
             try
             {
                 signOutResult =
-                    await module.InvokeAsync<string>("signOut");
+                    await module.InvokeAsync<string>("firebaseSignOut");
             }
             catch (Exception e)
             {
@@ -181,7 +181,7 @@ namespace BlazorUtils.Firebase
                 try
                 {
                     string userJson =
-                        await module.InvokeAsync<string>("getCurrentUser");
+                        await module.InvokeAsync<string>("firebaseGetCurrentUser");
 
                     return ParseUserJson(userJson);
                 }
@@ -220,7 +220,7 @@ namespace BlazorUtils.Firebase
             {
                 try
                 {
-                    return await module.InvokeAsync<bool>("isSignedIn");
+                    return await module.InvokeAsync<bool>("firebaseIsSignedIn");
                 }
                 catch (Exception e)
                 {
@@ -241,7 +241,7 @@ namespace BlazorUtils.Firebase
             {
                 try
                 {
-                    return await module.InvokeAsync<bool>("setPersistence", persistence);
+                    return await module.InvokeAsync<bool>("firebaseSetPersistence", persistence);
                 }
                 catch (Exception e)
                 {
