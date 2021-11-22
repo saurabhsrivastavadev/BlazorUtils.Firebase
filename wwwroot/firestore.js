@@ -3,10 +3,12 @@
 
 import { getFirestore } from 'https://www.gstatic.com/firebasejs/9.3.0/firebase-firestore.js';
 
+import { firebaseApp } from './init.js'
+
 /**
  * Class representing a firestore document reference data
  * */
-export class FirestoreDocRef {
+class FirestoreDocRef {
 
     /**
      * Constructor
@@ -35,7 +37,7 @@ export class FirestoreDocRef {
  * unknown fields, and the firstore document reference object.
  * This class maps to the IFirestoreDocument in C# layer.
  * */
-export class FirestoreDocument {
+class FirestoreDocument {
 
     /**
      * Constructor
@@ -86,7 +88,7 @@ export class FirestoreDocument {
 /**
  * Class representing a firestore operation result
  * */
-export class FirestoreOperationResult {
+class FirestoreOperationResult {
 
     /**
      * Specify success or failure, followed by call specific params
@@ -144,7 +146,7 @@ let db = null;
  * FirestoreOperationResult json object stringified.
  * This result object is obtained with call to _getResultObject
  */
-export async function addDocument(collection, documentStr) {
+async function addDocument(collection, documentStr) {
 
     if (db == null) {
         db = getFirestore();
@@ -163,10 +165,10 @@ export async function addDocument(collection, documentStr) {
     }
 }
 
-export async function getDocument(collection, docId) {
+async function getDocument(collection, docId) {
 
     if (db == null) {
-        db = firebase.firestore();
+        db = getFirestore();
     }
 
     try {
@@ -200,10 +202,10 @@ export async function getDocument(collection, docId) {
     }
 }
 
-export async function getAllDocuments(collection) {
+async function getAllDocuments(collection) {
 
     if (db == null) {
-        db = firebase.firestore();
+        db = getFirestore();
     }
 
     try {
@@ -227,10 +229,10 @@ export async function getAllDocuments(collection) {
     }
 }
 
-export async function setDocument(collection, docId, documentStr) {
+async function setDocument(collection, docId, documentStr) {
 
     if (db == null) {
-        db = firebase.firestore();
+        db = getFirestore();
     }
 
     try {
@@ -248,10 +250,10 @@ export async function setDocument(collection, docId, documentStr) {
     }
 }
 
-export async function updateDocument(collection, docId, documentStr) {
+async function updateDocument(collection, docId, documentStr) {
 
     if (db == null) {
-        db = firebase.firestore();
+        db = getFirestore();
     }
 
     try {
@@ -269,10 +271,10 @@ export async function updateDocument(collection, docId, documentStr) {
     }
 }
 
-export async function onSnapshot(collection, docId, assemblyName, authStateChangeCbName) {
+async function onSnapshot(collection, docId, assemblyName, authStateChangeCbName) {
 
     if (db == null) {
-        db = firebase.firestore();
+        db = getFirestore();
     }
 
     try {
@@ -295,3 +297,7 @@ export async function onSnapshot(collection, docId, assemblyName, authStateChang
         return JSON.stringify(new FirestoreOperationResult(false, { error: error }));
     }
 }
+
+export {
+    addDocument, getDocument, getAllDocuments, setDocument, updateDocument, onSnapshot
+};
