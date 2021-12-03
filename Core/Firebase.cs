@@ -67,7 +67,7 @@ namespace BlazorUtils.Firebase.Core
             if (moduleList != null && moduleList.Contains(FirebaseModule.FIRESTORE))
             {
                 // Firebase firestore
-                webAssemblyHostBuilderServices.AddSingleton<FirestoreService>();
+                webAssemblyHostBuilderServices.AddSingleton<IFirestoreService, FirestoreService>();
             }
         }
 

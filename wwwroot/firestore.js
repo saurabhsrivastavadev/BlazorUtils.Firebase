@@ -1,7 +1,7 @@
 // firestore.js
 // Wrappers on top of firestore javascript sdk
 
-import { getFirestore } from 'https://www.gstatic.com/firebasejs/9.3.0/firebase-firestore.js';
+import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/9.3.0/firebase-firestore.js';
 
 import { firebaseApp } from './init.js'
 
@@ -202,7 +202,7 @@ async function getDocument(collection, docId) {
     }
 }
 
-async function getAllDocuments(collection) {
+async function getAllDocuments(collectionPath) {
 
     if (db == null) {
         db = getFirestore();
@@ -210,8 +210,8 @@ async function getAllDocuments(collection) {
 
     try {
 
-        let snapshot = await db.collection(collection).get();
-        let docList = [];
+        const snapshot = await getDocs(collection(db, collectionPath));
+        const docList = [];
         snapshot.forEach(doc => {
             docList.push(new FirestoreDocument({
                 docRef: new FirestoreDocRef(doc.ref),
