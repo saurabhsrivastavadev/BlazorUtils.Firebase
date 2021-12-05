@@ -1,7 +1,9 @@
 // firestore.js
 // Wrappers on top of firestore javascript sdk
 
-import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/9.3.0/firebase-firestore.js';
+import {
+    getFirestore, collection, getDocs, addDoc
+} from 'https://www.gstatic.com/firebasejs/9.3.0/firebase-firestore.js';
 
 import { firebaseApp } from './init.js'
 
@@ -146,7 +148,7 @@ let db = null;
  * FirestoreOperationResult json object stringified.
  * This result object is obtained with call to _getResultObject
  */
-async function addDocument(collection, documentStr) {
+async function addDocument(collectionPath, documentStr) {
 
     if (db == null) {
         db = getFirestore();
@@ -154,8 +156,10 @@ async function addDocument(collection, documentStr) {
 
     try {
 
-        let doc = new FirestoreDocument({ interopObject: JSON.parse(documentStr) });
-        let docRef = await db.collection(collection).add(doc.userDocument);
+        const doc = new FirestoreDocument({ interopObject: JSON.parse(documentStr) });
+
+        const docRef = await addDoc(collection(db, collectionPath), doc.userDocument);
+
         doc.docRef = new FirestoreDocRef(docRef);
         return JSON.stringify(new FirestoreOperationResult(true, { document: doc }));
 
