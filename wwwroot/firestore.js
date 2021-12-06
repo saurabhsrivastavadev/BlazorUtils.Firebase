@@ -196,7 +196,7 @@ async function getDocument(collection, docId) {
         } else {
             return JSON.stringify(
                 new FirestoreOperationResult(
-                    false, { error: { name: 'Document does not exist.' } }));
+                    true, { error: { name: 'Document does not exist.' } }));
         }
 
     } catch (error) {
