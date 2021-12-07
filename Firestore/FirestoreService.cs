@@ -335,5 +335,69 @@ namespace BlazorUtils.Firebase
 
             return result;
         }
+
+        public async Task<FirestoreOperationResult<T>> SetCurrentUserDocument<T>(
+            T userDocument) where T : IFirestoreUserDocument
+        {
+            string collectionPath = "users";
+
+            if (string.IsNullOrEmpty(userDocument.Uid))
+            {
+                return new FirestoreOperationResult<T>
+                {
+                    Success = false,
+                    ErrorName = "Uid not set in userdocument."
+                };
+            }
+
+            // Fetch existing document
+            var result = await GetDocument<T>(collectionPath, userDocument.Uid);
+            if (result.Success)
+            {
+                result.Document?.Update(userDocument);
+                var docToSet = result.Document ?? userDocument;
+                return await SetDocument(collectionPath, docToSet.Uid, docToSet);
+            }
+            else
+            {
+                return new FirestoreOperationResult<T>
+                {
+                    Success = false,
+                    ErrorName = "Existing document verification failed"
+                };
+            }
+        }
+
+        class GoogleUserDocument : IFirestoreUserDocument
+        {
+            public FirestoreDocRef DocRef { get; set; }
+            public string Uid { get; set; }
+            public string DisplayName { get; set; }
+            public string Email { get; set; }
+            public string PhotoUrl { get; set; }
+        }
+
+        public async Task<FirestoreOperationResult<T>> SetCurrentGoogleUserDocument<T>(
+            FirebaseGoogleAuthResult.GoogleAuthUser user) where T : IFirestoreUserDocument
+        {
+            var userDocument = new IFirestoreUserDocument
+            {
+                Uid = user.uid,
+                DisplayName = user.displayName,
+                Email = user.email,
+                PhotoUrl = user.photoURL
+            };
+
+            var res = await SetCurrentUserDocument((IFirestoreUserDocument)userDocument);
+
+            return new FirestoreOperationResult<T>
+            {
+                Success = res.Success,
+                ErrorName = res.ErrorName,
+                ErrorCode = res.ErrorCode,
+                ErrorJsonStr = res.ErrorJsonStr,
+                Document = (T)res.Document
+            };
+        }
     }
 }

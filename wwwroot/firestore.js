@@ -2,7 +2,7 @@
 // Wrappers on top of firestore javascript sdk
 
 import {
-    getFirestore, collection, getDocs, addDoc
+    getFirestore, collection, getDocs, addDoc, doc, getDoc, setDoc
 } from 'https://www.gstatic.com/firebasejs/9.3.0/firebase-firestore.js';
 
 import { firebaseApp } from './init.js'
@@ -169,7 +169,7 @@ async function addDocument(collectionPath, documentStr) {
     }
 }
 
-async function getDocument(collection, docId) {
+async function getDocument(collectionPath, docId) {
 
     if (db == null) {
         db = getFirestore();
@@ -177,11 +177,12 @@ async function getDocument(collection, docId) {
 
     try {
 
-        let docRef = await db.collection(collection).doc(docId);
-        let doc = await docRef.get();
-        if (doc.exists) {
+        const docRef = doc(db, collectionPath, docId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists) {
 
-            let userDocument = doc.data();
+            let userDocument = docSnap.data();
+
             return JSON.stringify(
                 new FirestoreOperationResult(
                     true,
@@ -194,6 +195,8 @@ async function getDocument(collection, docId) {
                     }));
 
         } else {
+
+            console.log('firestore.js doc does not exist.');
             return JSON.stringify(
                 new FirestoreOperationResult(
                     true, { error: { name: 'Document does not exist.' } }));
@@ -201,6 +204,7 @@ async function getDocument(collection, docId) {
 
     } catch (error) {
 
+        console.log('firestore.js some exception ' + error);
         return JSON.stringify(
             new FirestoreOperationResult(false, { error: error }));
     }
@@ -233,7 +237,7 @@ async function getAllDocuments(collectionPath) {
     }
 }
 
-async function setDocument(collection, docId, documentStr) {
+async function setDocument(collectionPath, docId, documentStr) {
 
     if (db == null) {
         db = getFirestore();
@@ -241,15 +245,16 @@ async function setDocument(collection, docId, documentStr) {
 
     try {
 
-        let doc = new FirestoreDocument({ interopObject: JSON.parse(documentStr) });
-        let docRef = await db.collection(collection).doc(docId);
+        const fsDoc = new FirestoreDocument({ interopObject: JSON.parse(documentStr) });
+        const docRef = doc(db, collectionPath, docId);
 
-        await docRef.set(doc.userDocument);
+        await setDoc(docRef, fsDoc.userDocument);
 
-        return JSON.stringify(new FirestoreOperationResult(true, { document: doc }));
+        return JSON.stringify(new FirestoreOperationResult(true, { document: fsDoc }));
 
     } catch (error) {
 
+        console.error(error);
         return JSON.stringify(new FirestoreOperationResult(false, { error: error }));
     }
 }

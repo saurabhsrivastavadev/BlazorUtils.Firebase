@@ -40,6 +40,9 @@ namespace BlazorUtils.Firebase
         /// <returns>
         /// Firestore operation result which contains the document object fetched from
         /// firestore if the operation is successful.
+        /// Operation result will be marked success even if there is no document at the 
+        /// collection with specified docId, but document member in result would be null.
+        /// For all other failures, operation result success would be marked false.
         /// </returns>
         Task<FirestoreOperationResult<T>> GetDocument<T>(string collection, string docId) where T : IFirestoreDocument;
 
@@ -126,6 +129,29 @@ namespace BlazorUtils.Firebase
         //Task<FirestoreOperationResult<T>> UnsubscribeForDocumentUpdates<T>(string docId) where T : IFirestoreDocument;
 
         /// <summary>
+        /// Create or Update a document for currently signed in user at 'users/user.uid' 
+        /// Idea is that each application must have a representation of a unique user.
+        /// All of a users' data would be inside 'users/user.uid/...' path.
+        /// So this base user document would always be needed if not already created.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="userInfoDoc"></param>
+        /// <returns></returns>
+        Task<FirestoreOperationResult<T>> SetCurrentUserDocument<T>(
+            T userDocument) where T : IFirestoreUserDocument;
+
+        /// <summary>
+        /// Convenience method on top of 'SetCurrentUserDocument' to fetch user data
+        /// from authenticated Google user.
+        /// This method assumes that Google Auth is being utilized to authenticate users.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        Task<FirestoreOperationResult<T>> SetCurrentGoogleUserDocument<T>(
+            FirebaseGoogleAuthResult.GoogleAuthUser user) where T : IFirestoreUserDocument;
+
+        /// <summary>
         /// Firestore document reference
         /// </summary>
         public class FirestoreDocRef
@@ -141,6 +167,31 @@ namespace BlazorUtils.Firebase
         public interface IFirestoreDocument
         {
             public FirestoreDocRef DocRef { get; set; }
+        }
+
+        /// <summary>
+        /// Document representing an authenticated firestore user.
+        /// To be stored at users/{user.uid} firestore path.
+        /// </summary>
+        public class IFirestoreUserDocument : IFirestoreDocument
+        {
+            public FirestoreDocRef DocRef { get; set; }
+
+            public string Uid { get; set; }
+
+            public string DisplayName { get; set; }
+
+            public string Email { get; set; }
+
+            public string PhotoUrl { get; set; }
+
+            public void Update(IFirestoreUserDocument doc)
+            {
+                if (doc.Uid != null) Uid = doc.Uid;
+                if (doc.DisplayName != null) DisplayName = doc.DisplayName;
+                if (doc.Email != null) Email = doc.Email;
+                if (doc.PhotoUrl != null) PhotoUrl = doc.PhotoUrl;
+            }
         }
     }
 }
