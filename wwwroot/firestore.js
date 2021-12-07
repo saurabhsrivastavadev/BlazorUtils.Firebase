@@ -2,7 +2,7 @@
 // Wrappers on top of firestore javascript sdk
 
 import {
-    getFirestore, collection, getDocs, addDoc, doc, getDoc, setDoc
+    getFirestore, collection, getDocs, addDoc, doc, getDoc, setDoc, updateDoc, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/9.3.0/firebase-firestore.js';
 
 import { firebaseApp } from './init.js'
@@ -165,6 +165,7 @@ async function addDocument(collectionPath, documentStr) {
 
     } catch (error) {
 
+        console.error(error);
         return JSON.stringify(new FirestoreOperationResult(false, { error: error }));
     }
 }
@@ -196,7 +197,6 @@ async function getDocument(collectionPath, docId) {
 
         } else {
 
-            console.log('firestore.js doc does not exist.');
             return JSON.stringify(
                 new FirestoreOperationResult(
                     true, { error: { name: 'Document does not exist.' } }));
@@ -204,7 +204,7 @@ async function getDocument(collectionPath, docId) {
 
     } catch (error) {
 
-        console.log('firestore.js some exception ' + error);
+        console.error(error);
         return JSON.stringify(
             new FirestoreOperationResult(false, { error: error }));
     }
@@ -232,6 +232,7 @@ async function getAllDocuments(collectionPath) {
 
     } catch (error) {
 
+        console.error(error);
         return JSON.stringify(
             new FirestoreOperationResult(false, { error: error }));
     }
@@ -259,7 +260,7 @@ async function setDocument(collectionPath, docId, documentStr) {
     }
 }
 
-async function updateDocument(collection, docId, documentStr) {
+async function updateDocument(collectionPath, docId, documentStr) {
 
     if (db == null) {
         db = getFirestore();
@@ -267,20 +268,21 @@ async function updateDocument(collection, docId, documentStr) {
 
     try {
 
-        let doc = new FirestoreDocument({ interopObject: JSON.parse(documentStr) });
-        let docRef = await db.collection(collection).doc(docId);
+        const fsDoc = new FirestoreDocument({ interopObject: JSON.parse(documentStr) });
+        const docRef = doc(db, collectionPath, docId);
 
-        await docRef.update(doc.userDocument);
+        await updateDoc(docRef, fsDoc.userDocument);
 
         return JSON.stringify(new FirestoreOperationResult(true));
 
     } catch (error) {
 
+        console.error(error);
         return JSON.stringify(new FirestoreOperationResult(false, { error: error }));
     }
 }
 
-async function onSnapshot(collection, docId, assemblyName, authStateChangeCbName) {
+async function onDocumentSnapshot(collectionPath, docId, assemblyName, authStateChangeCbName) {
 
     if (db == null) {
         db = getFirestore();
@@ -288,25 +290,27 @@ async function onSnapshot(collection, docId, assemblyName, authStateChangeCbName
 
     try {
 
-        db.collection(collection).doc(docId).onSnapshot(doc => {
+        // todo :: add support to unsub from these snapshot updates
+        const unsub = onSnapshot(doc(db, collectionPath, docId), doc => {
 
-            let document = new FirestoreDocument({
+            let fsDoc = new FirestoreDocument({
                 docRef: new FirestoreDocRef(doc.ref),
                 userDocument: doc.data()
             });
 
             DotNet.invokeMethodAsync(assemblyName, authStateChangeCbName,
-                docId, JSON.stringify(document.getInteropObject()));
+                docId, JSON.stringify(fsDoc.getInteropObject()));
         });
 
         return JSON.stringify(new FirestoreOperationResult(true));
 
     } catch (error) {
 
+        console.error(error);
         return JSON.stringify(new FirestoreOperationResult(false, { error: error }));
     }
 }
 
 export {
-    addDocument, getDocument, getAllDocuments, setDocument, updateDocument, onSnapshot
+    addDocument, getDocument, getAllDocuments, setDocument, updateDocument, onDocumentSnapshot
 };

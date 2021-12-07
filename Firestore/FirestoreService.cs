@@ -181,7 +181,7 @@ namespace BlazorUtils.Firebase
 
         public async Task<FirestoreOperationResult<P>> UpdateDocument<P, C>(
             string collection, string docId, C document) where P : C
-                                                         where C : IFirestoreService.IFirestoreDocument
+                                                         where C : IFirestoreDocument
         {
             string operationResult = string.Empty;
 
@@ -255,7 +255,7 @@ namespace BlazorUtils.Firebase
             try
             {
                 operationResult =
-                    await module.InvokeAsync<string>("onSnapshot",
+                    await module.InvokeAsync<string>("onDocumentSnapshot",
                         collection, docId, "BlazorUtils.Firebase", "OnSnapshotJsCallback");
             }
             catch (Exception e)
