@@ -172,12 +172,22 @@ namespace BlazorUtils.Firebase
 
             public string PhotoUrl { get; set; }
 
-            public void Update(IFirestoreUserDocument doc)
+            public IFirestoreUserDocument Update(IFirestoreUserDocument doc)
             {
                 if (doc.Uid != null) Uid = doc.Uid;
                 if (doc.DisplayName != null) DisplayName = doc.DisplayName;
                 if (doc.Email != null) Email = doc.Email;
                 if (doc.PhotoUrl != null) PhotoUrl = doc.PhotoUrl;
+                return this;
+            }
+
+            public IFirestoreUserDocument Update(FirebaseGoogleAuthResult.GoogleAuthUser user)
+            {
+                if (user.uid != null) Uid = user.uid;
+                if (user.displayName != null) DisplayName = user.displayName;
+                if (user.email != null) Email = user.email;
+                if (user.photoURL != null) PhotoUrl = user.photoURL;
+                return this;
             }
         }
     }
