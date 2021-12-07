@@ -141,17 +141,6 @@ namespace BlazorUtils.Firebase
             T userDocument) where T : IFirestoreUserDocument;
 
         /// <summary>
-        /// Convenience method on top of 'SetCurrentUserDocument' to fetch user data
-        /// from authenticated Google user.
-        /// This method assumes that Google Auth is being utilized to authenticate users.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="user"></param>
-        /// <returns></returns>
-        Task<FirestoreOperationResult<T>> SetCurrentGoogleUserDocument<T>(
-            FirebaseGoogleAuthResult.GoogleAuthUser user) where T : IFirestoreUserDocument;
-
-        /// <summary>
         /// Firestore document reference
         /// </summary>
         public class FirestoreDocRef
@@ -173,10 +162,8 @@ namespace BlazorUtils.Firebase
         /// Document representing an authenticated firestore user.
         /// To be stored at users/{user.uid} firestore path.
         /// </summary>
-        public class IFirestoreUserDocument : IFirestoreDocument
+        public interface IFirestoreUserDocument : IFirestoreDocument
         {
-            public FirestoreDocRef DocRef { get; set; }
-
             public string Uid { get; set; }
 
             public string DisplayName { get; set; }
