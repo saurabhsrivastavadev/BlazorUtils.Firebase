@@ -367,5 +367,45 @@ namespace BlazorUtils.Firebase
                 };
             }
         }
+
+        public async Task<FirestoreOperationResult<T>> DeleteDocument<T>(
+            string collection, string docId) where T : IFirestoreDocument
+        {
+            string operationResult = string.Empty;
+
+            // Validate
+            if (string.IsNullOrWhiteSpace(collection))
+            {
+                Logger.LogError("Invalid firestore collection.");
+                return new FirestoreOperationResult<T>
+                {
+                    Success = false,
+                    ErrorName = "Invalid Arguments"
+                };
+            }
+            if (string.IsNullOrWhiteSpace(docId))
+            {
+                Logger.LogError("Invalid document id to set");
+                return new FirestoreOperationResult<T>
+                {
+                    Success = false,
+                    ErrorName = "Invalid Arguments"
+                };
+            }
+
+            var module = await firestoreModuleTask.Value;
+            try
+            {
+                operationResult =
+                    await module.InvokeAsync<string>("deleteDocument", collection, docId);
+            }
+            catch (Exception e)
+            {
+                Logger.LogError("Failed to delete firestore document");
+                Logger.LogError(e.Message);
+            }
+
+            return ConvertJsonToResult<T>(operationResult);
+        }
     }
 }

@@ -141,6 +141,16 @@ namespace BlazorUtils.Firebase
             T userDocument) where T : IFirestoreUserDocument;
 
         /// <summary>
+        /// Delete the document specified by collection path and document ID
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="collectionPath"></param>
+        /// <param name="docId"></param>
+        /// <returns></returns>
+        Task<FirestoreOperationResult<T>> DeleteDocument<T>(
+            string collectionPath, string docId) where T : IFirestoreDocument;
+
+        /// <summary>
         /// Firestore document reference
         /// </summary>
         public class FirestoreDocRef

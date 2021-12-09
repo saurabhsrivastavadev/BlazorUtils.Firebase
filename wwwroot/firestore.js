@@ -2,7 +2,8 @@
 // Wrappers on top of firestore javascript sdk
 
 import {
-    getFirestore, collection, getDocs, addDoc, doc, getDoc, setDoc, updateDoc, onSnapshot
+    getFirestore, collection, getDocs, addDoc, doc, getDoc, setDoc, updateDoc,
+    onSnapshot, deleteDoc
 } from 'https://www.gstatic.com/firebasejs/9.3.0/firebase-firestore.js';
 
 import { firebaseApp } from './init.js'
@@ -311,6 +312,34 @@ async function onDocumentSnapshot(collectionPath, docId, assemblyName, authState
     }
 }
 
+/**
+ * Function to delete the specified document.
+ * https://firebase.google.com/docs/firestore/manage-data/delete-data
+ * @param {string} collectionPath
+ * @param {string} docId
+ */
+async function deleteDocument(collectionPath, docId) {
+
+    if (db == null) {
+        db = getFirestore();
+    }
+
+    try {
+
+        const docRef = doc(db, collectionPath, docId);
+
+        await deleteDoc(docRef);
+
+        return JSON.stringify(new FirestoreOperationResult(true));
+
+    } catch (error) {
+
+        console.error(error);
+        return JSON.stringify(new FirestoreOperationResult(false, { error: error }));
+    }
+}
+
 export {
-    addDocument, getDocument, getAllDocuments, setDocument, updateDocument, onDocumentSnapshot
+    addDocument, getDocument, getAllDocuments, setDocument, updateDocument,
+    onDocumentSnapshot, deleteDocument
 };
