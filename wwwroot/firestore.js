@@ -181,7 +181,7 @@ async function getDocument(collectionPath, docId) {
 
         const docRef = doc(db, collectionPath, docId);
         const docSnap = await getDoc(docRef);
-        if (docSnap.exists) {
+        if (docSnap.exists()) {
 
             let userDocument = docSnap.data();
 
@@ -200,7 +200,7 @@ async function getDocument(collectionPath, docId) {
 
             return JSON.stringify(
                 new FirestoreOperationResult(
-                    true, { error: { name: 'Document does not exist.' } }));
+                    false, { error: { name: 'Document does not exist.' } }));
         }
 
     } catch (error) {
