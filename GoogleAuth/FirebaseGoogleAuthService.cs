@@ -24,6 +24,8 @@ namespace BlazorUtils.Firebase
 
         private IJSRuntime JSR { get; set; }
 
+        private bool _initDone;
+
         public FirebaseGoogleAuthService(IJSRuntime jsr, ILogger<FirebaseGoogleAuthService> logger)
         {
             if (Instance != null)
@@ -41,16 +43,23 @@ namespace BlazorUtils.Firebase
             authModuleTask = new (() => jsr.InvokeAsync<IJSObjectReference>(
                "import", "./_content/BlazorUtils.Firebase/auth.js").AsTask());
 
-            Core.Firebase.InitFirebaseSdk(initModuleTask);
-
             AuthStateChangedCallback += _ =>
             {
                 base.NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
             };
-            RegisterForAuthStateChangedEvent();
         }
 
-        private async void RegisterForAuthStateChangedEvent()
+        private async Task Init()
+        {
+            if (!_initDone)
+            {
+                await Core.Firebase.InitFirebaseSdk(initModuleTask);
+                await RegisterForAuthStateChangedEvent();
+                _initDone = true;
+            }
+        }
+
+        private async Task RegisterForAuthStateChangedEvent()
         {
             var module = await authModuleTask.Value;
             int retries = 0;
@@ -85,13 +94,15 @@ namespace BlazorUtils.Firebase
             }
         }
 
-        public Task<FirebaseGoogleAuthResult> SignInWithPopup(ISet<string> signInScopes = null)
+        public async Task<FirebaseGoogleAuthResult> SignInWithPopup(ISet<string> signInScopes = null)
         {
-            return SignIn(signInScopes, true);
+            await Init();
+            return await SignIn(signInScopes, true);
         }
-        public Task<FirebaseGoogleAuthResult> SignInWithRedirect(ISet<string> signInScopes = null)
+        public async Task<FirebaseGoogleAuthResult> SignInWithRedirect(ISet<string> signInScopes = null)
         {
-            return SignIn(signInScopes, false);
+            await Init();
+            return await SignIn(signInScopes, false);
         }
 
         private async Task<FirebaseGoogleAuthResult> SignIn(
@@ -124,6 +135,8 @@ namespace BlazorUtils.Firebase
 
         public async Task<FirebaseGoogleAuthResult> SignOut()
         {
+            await Init();
+
             var module = await authModuleTask.Value;
             string signOutResult = string.Empty;
             bool wasUserSignedIn = await IsSignedIn();
@@ -174,6 +187,8 @@ namespace BlazorUtils.Firebase
 
         public async Task<FirebaseGoogleAuthResult.GoogleAuthUser> GetCurrentUser()
         {
+            await Init();
+
             var module = await authModuleTask.Value;
             int retries = 0;
             while (retries++ < 5)
@@ -213,6 +228,8 @@ namespace BlazorUtils.Firebase
 
         public async Task<bool> IsSignedIn()
         {
+            await Init();
+
             var module = await authModuleTask.Value;
             int retries = 0;
             Exception failure = null;
@@ -234,6 +251,8 @@ namespace BlazorUtils.Firebase
 
         public async Task<bool> SetPersistence(string persistence)
         {
+            await Init();
+
             var module = await authModuleTask.Value;
             int retries = 0;
             Exception failure = null;
@@ -255,6 +274,8 @@ namespace BlazorUtils.Firebase
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
+            await Init();
+
             FirebaseGoogleAuthResult.GoogleAuthUser googleUser = await GetCurrentUser();
             ClaimsPrincipal user;
 

@@ -71,7 +71,7 @@ namespace BlazorUtils.Firebase.Core
             }
         }
 
-        internal static async void InitFirebaseSdk(Lazy<Task<IJSObjectReference>> initModuleTask)
+        internal static async Task InitFirebaseSdk(Lazy<Task<IJSObjectReference>> initModuleTask)
         {
             var initModule = await initModuleTask.Value;
             int retries = 0;

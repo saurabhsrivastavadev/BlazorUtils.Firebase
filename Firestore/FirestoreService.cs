@@ -18,6 +18,8 @@ namespace BlazorUtils.Firebase
         // Hold instance for callback invocation from javascript
         private static WeakReference<FirestoreService> Instance { get; set; }
 
+        private bool _initDone;
+
         public FirestoreService(IJSRuntime jsr, ILogger<FirestoreService> logger)
         {
             if (Instance != null)
@@ -33,13 +35,22 @@ namespace BlazorUtils.Firebase
                 "import", "./_content/BlazorUtils.Firebase/init.js").AsTask());
             firestoreModuleTask = new(() => jsr.InvokeAsync<IJSObjectReference>(
                 "import", "./_content/BlazorUtils.Firebase/firestore.js").AsTask());
+        }
 
-            Core.Firebase.InitFirebaseSdk(initModuleTask);
+        private async Task Init()
+        {
+            if (!_initDone)
+            {
+                await Core.Firebase.InitFirebaseSdk(initModuleTask);
+                _initDone = true;
+            }
         }
 
         public async Task<FirestoreOperationResult<T>>
             AddDocument<T>(string collection, T document) where T : IFirestoreService.IFirestoreDocument
         {
+            await Init();
+
             string operationResult = string.Empty;
 
             // Validate
@@ -73,6 +84,8 @@ namespace BlazorUtils.Firebase
         public async Task<FirestoreOperationResult<T>>
             GetDocument<T>(string collection, string docId) where T : IFirestoreService.IFirestoreDocument
         {
+            await Init();
+
             string operationResult = string.Empty;
 
             // Validate
@@ -105,6 +118,8 @@ namespace BlazorUtils.Firebase
         public async Task<FirestoreOperationResult<T>>
             GetAllDocuments<T>(string collection) where T : IFirestoreService.IFirestoreDocument
         {
+            await Init();
+
             string operationResult = string.Empty;
 
             // Validate
@@ -132,6 +147,8 @@ namespace BlazorUtils.Firebase
         public async Task<FirestoreOperationResult<T>> SetDocument<T>(
             string collection, string docId, T document) where T : IFirestoreService.IFirestoreDocument
         {
+            await Init();
+
             string operationResult = string.Empty;
 
             // Validate
@@ -183,6 +200,8 @@ namespace BlazorUtils.Firebase
             string collection, string docId, C document) where P : C
                                                          where C : IFirestoreDocument
         {
+            await Init();
+
             string operationResult = string.Empty;
 
             // Validate
@@ -237,6 +256,8 @@ namespace BlazorUtils.Firebase
         public async Task<FirestoreOperationResult<T>> SubscribeForDocumentUpdates<T>(
             string collection, string docId, DocumentUpdateCallback callback) where T : IFirestoreDocument
         {
+            await Init();
+
             if (_docIdVsDocType.ContainsKey(docId))
             {
                 Logger.LogInformation($"doc id {docId} already subscribed for updated.");
@@ -339,8 +360,11 @@ namespace BlazorUtils.Firebase
         public async Task<FirestoreOperationResult<T>> SetCurrentUserDocument<T>(
             T userDocument) where T : IFirestoreUserDocument
         {
+            await Init();
+
             string collectionPath = "users";
 
+            // Validations
             if (string.IsNullOrEmpty(userDocument.Uid))
             {
                 return new FirestoreOperationResult<T>
@@ -371,6 +395,8 @@ namespace BlazorUtils.Firebase
         public async Task<FirestoreOperationResult<T>> DeleteDocument<T>(
             string collection, string docId) where T : IFirestoreDocument
         {
+            await Init();
+
             string operationResult = string.Empty;
 
             // Validate
