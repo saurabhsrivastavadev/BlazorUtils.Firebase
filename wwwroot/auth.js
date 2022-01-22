@@ -2,7 +2,7 @@
 // Wrappers on top of firebase authentication javascript sdk
 
 import {
-    GoogleAuthProvider, getAuth, setPersistence, browserSessionPersistence, signInWithPopup,
+    GoogleAuthProvider, getAuth, setPersistence, browserLocalPersistence, signInWithPopup,
     signInWithRedirect, signOut
 } from 'https://www.gstatic.com/firebasejs/9.3.0/firebase-auth.js';
 
@@ -57,7 +57,7 @@ async function firebaseSignIn(signInScopeList, loginType) {
     // by default resort to local persistence
     // keep the user signed in
     const auth = getAuth();
-    await setPersistence(auth, browserSessionPersistence);
+    await setPersistence(auth, browserLocalPersistence);
 
     let resultObj;
     try {
