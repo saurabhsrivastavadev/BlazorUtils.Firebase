@@ -384,11 +384,7 @@ namespace BlazorUtils.Firebase
             }
             else
             {
-                return new FirestoreOperationResult<T>
-                {
-                    Success = false,
-                    ErrorName = "Existing document verification failed"
-                };
+                return await SetDocument(collectionPath, userDocument.Uid, userDocument);
             }
         }
 
