@@ -26,6 +26,8 @@ namespace BlazorUtils.Firebase
 
         private bool _initDone;
 
+        private TaskCompletionSource FirstAuthTask = new TaskCompletionSource();
+
         public FirebaseGoogleAuthService(IJSRuntime jsr, ILogger<FirebaseGoogleAuthService> logger)
         {
             if (Instance != null)
@@ -45,6 +47,7 @@ namespace BlazorUtils.Firebase
 
             AuthStateChangedCallback += _ =>
             {
+                if (!FirstAuthTask.Task.IsCompleted) FirstAuthTask.SetResult();
                 base.NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
             };
         }
@@ -55,6 +58,7 @@ namespace BlazorUtils.Firebase
             {
                 await Core.Firebase.InitFirebaseSdk(initModuleTask);
                 await RegisterForAuthStateChangedEvent();
+                await FirstAuthTask.Task;
                 _initDone = true;
             }
         }
