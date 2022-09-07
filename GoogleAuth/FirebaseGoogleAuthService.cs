@@ -101,12 +101,34 @@ namespace BlazorUtils.Firebase
         public async Task<FirebaseGoogleAuthResult> SignInWithPopup(ISet<string> signInScopes = null)
         {
             await Init();
-            return await SignIn(signInScopes, true);
+
+            // create a task to wait for sign in to complete, and pass to Auth manager
+            TaskCompletionSource<AuthenticationState> signInTask = new TaskCompletionSource<AuthenticationState>();
+            base.NotifyAuthenticationStateChanged(signInTask.Task);
+            
+            // wait for sign in 
+            var authResult = await SignIn(signInScopes, true);
+
+            // Set sign in result to auth manager 
+            signInTask.SetResult(await GetAuthenticationStateAsync());
+
+            return authResult;
         }
         public async Task<FirebaseGoogleAuthResult> SignInWithRedirect(ISet<string> signInScopes = null)
         {
             await Init();
-            return await SignIn(signInScopes, false);
+
+            // create a task to wait for sign in to complete, and pass to Auth manager
+            TaskCompletionSource<AuthenticationState> signInTask = new TaskCompletionSource<AuthenticationState>();
+            base.NotifyAuthenticationStateChanged(signInTask.Task);
+
+            // wait for sign in 
+            var authResult = await SignIn(signInScopes, false);
+
+            // Set sign in result to auth manager 
+            signInTask.SetResult(await GetAuthenticationStateAsync());
+
+            return authResult;
         }
 
         private async Task<FirebaseGoogleAuthResult> SignIn(
